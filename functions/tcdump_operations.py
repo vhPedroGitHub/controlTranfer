@@ -69,7 +69,7 @@ def is_program_installed(pod_name, namespace, v1, command, program):
 def run_tcpdump_in_pod(pod_name, namespace, v1):
     try:
         # Comando para ejecutar tcpdump en segundo plano
-        command = ["sh", "-c", f"tcpdump -Z root -w /tmp/{pod_name}.pcap &"]
+        command = ["sh", "-c", f"tcpdump -Z root -i any -w /tmp/{pod_name}.pcap &"]
         print(f"Iniciando tcpdump en el Pod {pod_name}...")
 
         # Ejecutar el comando en el Pod
@@ -117,7 +117,7 @@ def stop_tcpdump_in_pod(pod_name, namespace, v1):
 def run_copy_tcpdump(pod_name, namespace, v1):
     try:
         print(f"Copiando captura desde el Pod {pod_name}...")
-        command = f"kubectl cp {namespace}/{pod_name}:/tmp/{pod_name}.pcap ./tcpdump_files/{pod_name}.pcap"
+        command = f"kubectl cp {namespace}/{pod_name}:/tmp/{pod_name}.pcap ./archives/tcpdump_files/{pod_name}.pcap"
         result = os.system(command)
         if result == 0:
             print(f"Captura copiada desde el Pod {pod_name}.")
