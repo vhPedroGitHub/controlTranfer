@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import time
 from decimal import Decimal
 from classes.capture_pcap import CapturePcap
+from pyvis.network import Network
 
 pcaps_conf = CapturePcap.from_directory("archives/tcpdump_files")
 
@@ -27,6 +28,26 @@ def generate_txt_packets(packets, pod_name):
         for packet in packets:
             if IP in packet:
                 f.write(str(packet) + '\n')
+
+def create_graph_dynamic_html(pod_name, G):
+    # Crear un grafo de PyVis
+    net = Network(notebook=True, directed=True, cdn_resources='remote')
+
+    # Agregar nodos y aristas desde el grafo de NetworkX
+    for node in G.nodes:
+        net.add_node(node)
+
+    for edge in G.edges(data=True):
+        src, dst, data = edge
+        net.add_edge(src, dst)
+
+    # Guardar el grafo como un archivo HTML
+    html_filename = f'archives/imgs/dinamic_html/{pod_name}.html'
+
+    # Guardar y mostrar el grafo en un navegador
+    net.show(html_filename, notebook=False)
+
+    print(f"Grafo dinámico guardado en: {html_filename}")
 
 # Función para crear un grafo a partir de los paquetes
 def create_graph(packets, pod_name, pods_dict):
@@ -60,7 +81,10 @@ def create_graph(packets, pod_name, pods_dict):
     plt.savefig(f'archives/imgs/pods_traffic/{pod_name}.png')
     plt.close()
 
+    create_graph_dynamic_html(pod_name, G)
+
     generate_txt_packets(packets, pod_name)
+
 
 def create_all_graph(pods_dict):
     all_packets = get_all_packets(pcaps_conf)
