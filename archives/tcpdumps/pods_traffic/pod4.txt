@@ -1,3 +1,5 @@
+Ether / IP / ICMP 10.244.0.48 > 10.244.0.53 echo-request 0 / Raw
+Ether / IP / ICMP 10.244.0.48 > 10.244.0.51 echo-request 0 / Raw
 Ether / IP / ICMP 10.244.0.48 > 10.244.0.50 echo-request 0 / Raw
 Ether / IP / ICMP 10.244.0.50 > 10.244.0.48 echo-reply 0 / Raw
 Ether / IP / ICMP 10.244.0.48 > 10.244.0.50 echo-request 0 / Raw
@@ -16,147 +18,13 @@ Ether / IP / ICMP 10.244.0.51 > 10.244.0.50 echo-request 0 / Raw
 Ether / IP / ICMP 10.244.0.50 > 10.244.0.51 echo-reply 0 / Raw
 Ether / IP / ICMP 10.244.0.51 > 10.244.0.50 echo-request 0 / Raw
 Ether / IP / ICMP 10.244.0.50 > 10.244.0.51 echo-reply 0 / Raw
-Ether / IP / UDP / DNS Qry b'deb.debian.org.default.svc.cluster.local.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.default.svc.cluster.local.'
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Qry b'deb.debian.org.svc.cluster.local.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.svc.cluster.local.'
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cluster.local.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cluster.local.'
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cujae.edu.cu.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cujae.edu.cu.'
-Ether / IP / UDP / DNS Ans server-failure
-Ether / IP / UDP / DNS Ans server-failure
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cujae.edu.cu.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cujae.edu.cu.'
-Ether / IP / UDP / DNS Ans server-failure
-Ether / IP / UDP / DNS Ans server-failure
-Ether / IP / UDP / DNS Qry b'deb.debian.org.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.'
-Ether / IP / UDP / DNS Ans b'debian.map.fastlydns.net.'
-Ether / IP / UDP / DNS Ans b'debian.map.fastlydns.net.'
-Ether / IP / TCP 10.244.0.50:48412 > 151.101.2.132:http S
-Ether / IP / TCP 10.244.0.50:42924 > 151.101.66.132:http S
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:48412 SA
-Ether / IP / TCP 10.244.0.50:48412 > 151.101.2.132:http A
-Ether / IP / TCP 10.244.0.50:48412 > 151.101.2.132:http PA / Raw
-Ether / IP / TCP 151.101.66.132:http > 10.244.0.50:42924 SA
-Ether / IP / TCP 10.244.0.50:42924 > 151.101.66.132:http R
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:48412 A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:48412 PA / Raw
-Ether / IP / TCP 10.244.0.50:48412 > 151.101.2.132:http A
-Ether / IP / TCP 10.244.0.50:48412 > 151.101.2.132:http PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:48412 A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:48412 PA / Raw
-Ether / IP / TCP 10.244.0.50:48412 > 151.101.2.132:http PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:48412 A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:48412 PA / Raw
-Ether / IP / TCP 10.244.0.50:48412 > 151.101.2.132:http A
-Ether / IP / TCP 10.244.0.50:48412 > 151.101.2.132:http FA
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:48412 A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:48412 FA
-Ether / IP / TCP 10.244.0.50:48412 > 151.101.2.132:http A
-Ether / IP / UDP / DNS Qry b'deb.debian.org.default.svc.cluster.local.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.default.svc.cluster.local.'
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Qry b'deb.debian.org.svc.cluster.local.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.svc.cluster.local.'
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cluster.local.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cluster.local.'
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Ans name-error
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cujae.edu.cu.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cujae.edu.cu.'
-Ether / IP / UDP / DNS Ans server-failure
-Ether / IP / UDP / DNS Ans server-failure
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cujae.edu.cu.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.cujae.edu.cu.'
-Ether / IP / UDP / DNS Ans server-failure
-Ether / IP / UDP / DNS Ans server-failure
-Ether / IP / UDP / DNS Qry b'deb.debian.org.'
-Ether / IP / UDP / DNS Qry b'deb.debian.org.'
-Ether / IP / UDP / DNS Ans b'debian.map.fastlydns.net.'
-Ether / IP / UDP / DNS Ans b'debian.map.fastlydns.net.'
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http S
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 SA
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 A / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 PA / Raw
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http FA
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 A
-Ether / IP / TCP 151.101.2.132:http > 10.244.0.50:57520 FA
-Ether / IP / TCP 10.244.0.50:57520 > 151.101.2.132:http A
+Ether / IP / ICMP 10.244.0.50 > 10.244.0.48 echo-request 0 / Raw
+Ether / IP / ICMP 10.244.0.48 > 10.244.0.50 echo-reply 0 / Raw
+Ether / IP / ICMP 10.244.0.50 > 10.244.0.48 echo-request 0 / Raw
+Ether / IP / ICMP 10.244.0.48 > 10.244.0.50 echo-reply 0 / Raw
+Ether / IP / ICMP 10.244.0.50 > 10.244.0.48 echo-request 0 / Raw
+Ether / IP / ICMP 10.244.0.48 > 10.244.0.50 echo-reply 0 / Raw
+Ether / IP / ICMP 10.244.0.50 > 10.244.0.53 echo-request 0 / Raw
+Ether / IP / ICMP 10.244.0.53 > 10.244.0.50 echo-reply 0 / Raw
+Ether / IP / ICMP 10.244.0.50 > 10.244.0.53 echo-request 0 / Raw
+Ether / IP / ICMP 10.244.0.53 > 10.244.0.50 echo-reply 0 / Raw

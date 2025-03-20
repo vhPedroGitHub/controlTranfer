@@ -126,9 +126,9 @@ def run_copy_tcpdump(pod_name, namespace, v1):
     except Exception as e:
         print(f"Error al copiar la captura desde el Pod {pod_name}: {e}")
 
-from functions.checks import ping_pods
+from functions.checks import ping_pods, curl_pods
 # Se ejecuta el comando de tcpdump en cada pod
-def run_tcpdump_in_all_pods(pods, v1, ping=False):
+def run_tcpdump_in_all_pods(pods, v1, ping=False, curl=False):
     for pod in pods:
         is_program_installed(pod.name, pod.namespace, v1, "tcpdump", {"Ubuntu": "tcpdump", "CentOS": "tcpdump", "Alpine": "tcpdump"})
         # Se ejecuta el comando de tcpdump en cada pod
@@ -138,6 +138,10 @@ def run_tcpdump_in_all_pods(pods, v1, ping=False):
         for pod in pods:
             is_program_installed(pod.name, pod.namespace, v1, "ping",{"Ubuntu": "iputils-ping", "CentOS": "iputils", "Alpine": "ping"})
             ping_pods(pod.name, pods)
+    
+    if curl:
+        for pod in pods:
+            curl_pods(pod.name, pods)
 
 def stop_tcpdump_in_all_pods(pods, v1):
     for pod in pods:

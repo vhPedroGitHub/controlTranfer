@@ -2,7 +2,7 @@
 from variables.init_vars import *
 
 from functions.get_new_pcaps import get_new_pcaps
-get_new_pcaps(pods_list, v1)
+get_new_pcaps(pods_list, v1, ping)
 
 from functions.operate_pcaps import create_all_graph
 create_all_graph(pods_dict)
