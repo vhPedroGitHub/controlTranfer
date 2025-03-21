@@ -1,14 +1,23 @@
 from classes.pods import Pods
 
 # funcion para obtener los pods que hay en mi cluster de kubernetes
-def get_pods(v1):
+def get_pods(v1, namespace=""):
     # Obtener información de los Pods
-    pods = v1.list_pod_for_all_namespaces(watch=False)
+    if namespace != "":
+        pods = v1.list_namespaced_pod(namespace, watch=False)
+    else:
+        pods = v1.list_pod_for_all_namespaces(watch=False)
     pods_dict = {}
     pod_info = []
 
     for pod_inf in pods.items:
-        pod_info.append([pod_inf.metadata.name, pod_inf.status.pod_ip, pod_inf.metadata.namespace])
+        pod_ports = []
+        if pod_inf.spec.containers:
+            for container in pod_inf.spec.containers:
+                if container.ports:
+                    for port in container.ports:
+                        pod_ports.append(port.container_port)
+        pod_info.append([pod_inf.metadata.name, pod_inf.status.pod_ip, pod_inf.metadata.namespace, pod_ports])
     
     print(pod_info)
     print("\n")
@@ -17,8 +26,8 @@ def get_pods(v1):
     pod_objects = []
     for pod in pod_info:
         if pod[2] != "kube-system":
-            pod_objects.append(Pods( pod[0], pod[1], pod[2] ))
-            print(pod[1], pod[0])
+            pod_objects.append(Pods(pod[0], pod[1], pod[2], pod[3]))
+            print(pod[1], pod[0], pod[3])
             pods_dict[pod[1]] = pod[0]
 
     print(pod_objects)

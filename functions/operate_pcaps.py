@@ -1,157 +1,197 @@
-from scapy.all import IP
-# from datetime import datetime
-import networkx as nx
-import matplotlib.pyplot as plt
-# import sqlite3
-import time
-from decimal import Decimal
+from scapy.all import IP, TCP
+from scapy.sessions import TCPSession
 from classes.capture_pcap import CapturePcap
-from pyvis.network import Network
+from functions.other_functions import eliminar_archivos_en_directorio
+import os
+from variables.init_vars import limit
+import logging
+from threading import Lock
 
-pcaps_conf = CapturePcap.from_directory("archives/tcpdump_files")
+loggers = {}
+log_file_path = f"archives/logs"
+
+def setup_logger(log_file_path, pod_name):
+    # Crear el archivo de log específico para el pod
+    log_file = f"{log_file_path}"
+    # Crear un logger específico para el pod
+    logger = logging.getLogger(pod_name)
+    logger.setLevel(logging.INFO)  # Nivel de logging
+
+    # Crear un handler para escribir en el archivo
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(logging.INFO)
+
+    # Formato del log
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+    file_handler.setFormatter(formatter)
+
+    # Agregar el handler al logger
+    logger.addHandler(file_handler)
+
+    return logger
+
+pcaps_conf = CapturePcap.from_directory("archives/tcpdump_files", limit)
 
 def get_packets(pcap_conf):
+    print(f"Obteniendo paquetes de {pcap_conf.pod_name}")
     packets = pcap_conf.capture
-    for pcap in packets:
-        if IP in pcap:
-            print(pcap)
+    loggers[pcap_conf.pod_name] = setup_logger(f"{log_file_path}/{pcap_conf.pod_name}.log", pcap_conf.pod_name)
     return [packets, pcap_conf.pod_name]
 
 def get_all_packets(pcaps_conf):
+    print("Obteniendo todos los paquetes")
     all_packets = []
     for pcap in pcaps_conf:
         all_packets.append(get_packets(pcap))
     return all_packets
 
-def generate_txt_packets(packets, pod_name):
-    with open(f'archives/tcpdumps/pods_traffic/{pod_name}.txt', 'w') as f:
-        for packet in packets:
-            if IP in packet:
-                f.write(str(packet) + '\n')
+# Crear un Lock global para sincronizar la escritura en el archivo
+file_lock = Lock()
 
-def create_graph_dynamic_html(pod_name, G):
-    # Crear un grafo de PyVis
-    net = Network(notebook=True, directed=True, cdn_resources='remote')
+def generate_txt_packets(packets, pod_name, filename):
+    print(f"Generando archivo de texto para {pod_name}")
+    
+    # Asegurarse de que el directorio existe
+    os.makedirs(filename, exist_ok=True)
+    
+    # Ruta completa del archivo
+    file_path = os.path.join(filename, f"{pod_name}.txt")
+    
+    # Usar un Lock para evitar condiciones de carrera
+    with file_lock:
+        with open(file_path, 'w') as f:
+            for packet in packets:
+                if packet:  # Verificar que el paquete no esté vacío
+                    f.write(str(packet) + '\n')
 
-    # Agregar nodos y aristas desde el grafo de NetworkX
-    for node in G.nodes:
-        net.add_node(node)
+def write_string_to_file(string, pod_name, filename):
+    print(f"Escribiendo en el archivo {pod_name}.txt")
+    with file_lock:
+        with open(f'{filename}/{pod_name}.txt', 'w') as f:
+            f.write(string)
 
-    for edge in G.edges(data=True):
-        src, dst, data = edge
-        net.add_edge(src, dst)
+def split_long_lines(text, max_length=80):
+    return "\n".join([text[i:i+max_length] for i in range(0, len(text), max_length)])
 
-    # Guardar el grafo como un archivo HTML
-    html_filename = f'archives/imgs/dinamic_html/{pod_name}.html'
+def build_tcp_flow(packets, pod_name, filename):
+    # Agrupar paquetes por sesión TCP
+    sessions = packets.sessions(session_extractor=TCPSession)
+    # input("Press Enter to continue...")
 
-    # Guardar y mostrar el grafo en un navegador
-    net.show(html_filename, notebook=False)
+    # Diccionario para almacenar los datos de cada sesión TCP
+    tcp_flows = {}
 
-    print(f"Grafo dinámico guardado en: {html_filename}")
+    for session in sessions:
+        # Lista para almacenar los paquetes ordenados por número de secuencia
+        ordered_packets = []
 
-# Función para crear un grafo a partir de los paquetes
-def create_graph(packets, pod_name, pods_dict):
-    G = nx.DiGraph()
+        for pkt in sessions[session]:
+            if pkt.haslayer(TCP) and pkt.haslayer("Raw"):
+                # Extraer el número de secuencia TCP
+                seq_num = pkt[TCP].seq
+                # Extraer el payload (datos brutos)
+                payload = pkt["Raw"].load
+                # Guardar el paquete con su número de secuencia
+                ordered_packets.append((seq_num, payload))
+
+        # Ordenar los paquetes por número de secuencia
+        ordered_packets.sort(key=lambda x: x[0])
+
+        # Reconstruir el flujo de datos TCP en orden
+        flow = b""
+        for seq_num, payload in ordered_packets:
+            flow += payload
+
+        # Guardar el flujo de datos en el diccionario
+        tcp_flows[session] = flow
+
+    # Crear la carpeta si no existe
+    if not os.path.exists(f"{filename}/{pod_name}"):
+        os.makedirs(f"{filename}/{pod_name}")
+    eliminar_archivos_en_directorio(f"{filename}/{pod_name}")
+
+    with file_lock:
+        # Guardar todos los flujos en un solo archivo .txt
+        with open(f"{filename}/{pod_name}/all_sessions.txt", "w", encoding="utf-8") as f:
+            for i, (session, flow) in enumerate(tcp_flows.items()):
+                if flow != b"":
+                    # Extraer información de la sesión (IP y puertos)
+                    # Acceder a la capa IP y TCP del primer paquete de la sesión
+                    first_packet = sessions[session][0]
+                    if first_packet.haslayer(IP) and first_packet.haslayer(TCP):
+                        src_ip = first_packet[IP].src
+                        dst_ip = first_packet[IP].dst
+                        src_port = first_packet[TCP].sport
+                        dst_port = first_packet[TCP].dport
+                    else:
+                        # Si no hay capa IP o TCP, usar valores por defecto
+                        src_ip, src_port, dst_ip, dst_port = "Unknown", 0, "Unknown", 0
+                    # Decodificar el flujo binario a una cadena de texto (UTF-8)
+                    decoded_text = flow.decode("utf-8", errors="ignore")
+
+                    # Dividir el texto en líneas más cortas
+                    formatted_text = split_long_lines(decoded_text)
+
+                    # Escribir la información de la sesión en el archivo
+                    f.write(f"=== Sesión {i + 1} ===\n")
+                    f.write(f"ID de sesión: {session}\n")
+                    f.write(f"Origen: {src_ip}:{src_port}\n")
+                    f.write(f"Destino: {dst_ip}:{dst_port}\n")
+                    f.write(f"Datos:\n{formatted_text}\n\n")
+
+        # Guardar todos los flujos en un solo archivo .bin
+        with open(f"{filename}/{pod_name}/all_sessions.bin", "wb") as f:
+            for i, (session, flow) in enumerate(tcp_flows.items()):
+                if flow != b"":
+                    # Escribir la información de la sesión en el archivo binario
+                    session_info = f"=== Sesión {i + 1} ===\nID de sesión: {session}\n".encode("utf-8")
+                    f.write(session_info)
+                    # Convertir el flujo a hexadecimal y escribirlo en el archivo
+                    hex_flow = flow.hex().encode("utf-8")
+                    f.write(hex_flow)
+                    f.write(b"\n\n")
+
+    return tcp_flows
+
+def anal_pcap(packets, pod_name, filename, filename_tcp):
+    print(f"Analizando pcap de {pod_name}")
+    count = 0
+    for i in packets:
+        count += 1
+        
+    stats = {
+        "total_packets": count,
+        "ip_packets": 0,
+        "unique_ips": set(),
+        "packet_lengths": [],
+        "protocols": {}
+    }
+
     for packet in packets:
         if IP in packet:
-            src_ip = packet[IP].src
-            dst_ip = packet[IP].dst
-            src_name = pods_dict.get(src_ip, src_ip)
-            dst_name = pods_dict.get(dst_ip, dst_ip)
-            G.add_edge(src_name, dst_name, color='blue')
-    # Guardar el grafo final como una imagen
-    pos = nx.spring_layout(G)
-    plt.figure(figsize=(12, 8))
-    nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=1000)
-    nx.draw_networkx_labels(G, pos, font_size=10)
+            stats["ip_packets"] += 1
+            stats["unique_ips"].add(packet[IP].src)
+            stats["unique_ips"].add(packet[IP].dst)
+            stats["packet_lengths"].append(len(packet))
+            proto = packet[IP].proto
+            proto_name = packet[IP].get_field('proto').i2s[proto]
+            if proto_name in stats["protocols"]:
+                stats["protocols"][proto_name] += 1
+            else:
+                stats["protocols"][proto_name] = 1
 
-    # Dibujar aristas curvas
-    for u, v, data in G.edges(data=True):
-        rad = 0.1  # Ajustar la curvatura según la clave de la arista
-        nx.draw_networkx_edges(
-            G, pos, edgelist=[(u, v)], 
-            edge_color=data['color'], 
-            arrowstyle='->',  # Estilo de la punta de flecha
-            arrows=True,  # Habilitar las puntas de flecha
-            arrowsize=15,  # Aumentar el tamaño de las flechas
-            node_size=1000,  # Ajustar el tamaño de los nodos para que las flechas no se oculten
-            connectionstyle=f"arc3,rad={rad}"  # Hacer las aristas curvas
-        )
+    stats["unique_ips"] = len(stats["unique_ips"])
+    stats["average_packet_length"] = sum(stats["packet_lengths"]) / len(stats["packet_lengths"]) if stats["packet_lengths"] else 0
+
+    write_string_to_file(f'''
+            Statistics for {pod_name}:
+    Total packets: {stats['total_packets']}
+    IP packets: {stats['ip_packets']}
+    Unique IPs: {stats['unique_ips']}
+    Average packet length: {stats['average_packet_length']:.2f}
+    Protocols: {stats['protocols']}
+                         '''
+                            , pod_name, filename)
     
-    plt.savefig(f'archives/imgs/pods_traffic/{pod_name}.png')
-    plt.close()
-
-    create_graph_dynamic_html(pod_name, G)
-
-    generate_txt_packets(packets, pod_name)
-
-
-def create_all_graph(pods_dict):
-    all_packets = get_all_packets(pcaps_conf)
-    for packets, pod_name in all_packets:
-        create_graph(packets, pod_name, pods_dict)
-
-# funciones animadas
-# Función para actualizar el grafo en cada fotograma
-def update_graph(frame, G, connections, ax):
-    ax.clear()  # Limpiar el eje
-
-    # Cambiar el color de la arista correspondiente al paquete actual
-
-    src_ip, dst_ip = connections[frame]
-    G[src_ip][dst_ip]['color'] = 'green'  # Cambiar a verde
-
-    # Dibujar el grafo
-    if frame == 0:
-        global pos
-        pos = nx.spring_layout(G)  # Posición de los nodos solo en el primer frame
-    nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=1000, ax=ax)
-    nx.draw_networkx_labels(G, pos, font_size=5, ax=ax)
-
-    # Dibujar aristas curvas
-    for u, v, data in G.edges(data=True):
-        rad = 0.1 # Ajustar la curvatura según la clave de la arista
-        nx.draw_networkx_edges(
-            G, pos, edgelist=[(u, v)], 
-            edge_color=data['color'], 
-            arrowstyle='->',  # Estilo de la punta de flecha
-            arrows=True,  # Habilitar las puntas de flecha
-            arrowsize=15,  # Aumentar el tamaño de las flechas
-            node_size=1000,  # Ajustar el tamaño de los nodos para que las flechas no se oculten
-            connectionstyle=f"arc3,rad={rad}",  # Hacer las aristas curvas
-            ax=ax
-        )
-
-    # Restaurar el color de la arista a azul después de mostrarla
-    G[src_ip][dst_ip]['color'] = 'blue'
-
-    # Mostrar el número de paquete
-    ax.set_title(f"Paquete {frame + 1} de {len(connections)}")
-
-def operate_pcap(pods_dict, packets):
-    if input("¿Desea cargar los archivos .pcap? (s/n): ").strip().lower() == 's':
-        G = nx.DiGraph()
-        # Extraer las direcciones IP de origen y destino
-        connections = []
-        for packet in packets:
-            if IP in packet:
-                src_ip = packet[IP].src
-                dst_ip = packet[IP].dst
-                src_name = pods_dict.get(src_ip, src_ip)
-                dst_name = pods_dict.get(dst_ip, dst_ip)
-                connections.append((src_name, dst_name))
-
-        # Agregar todas las conexiones al grafo
-        for src_ip, dst_ip in connections:
-            G.add_edge(src_ip, dst_ip, color='blue')
-
-        # Configurar la figura y el eje
-        fig, ax = plt.subplots()
-
-        # Bucle para avanzar la animación con Enter
-        frame = 0
-        while frame < len(connections):
-            update_graph(frame, G, connections, ax)
-            plt.pause(0.1)  # Pausa para mostrar el gráfico
-            input("Presiona Enter para ver el siguiente paquete...")  # Esperar a que se presione Enter
-            frame += 1
+    if stats["protocols"] != {} and "tcp" in stats["protocols"]:
+        build_tcp_flow(packets, pod_name, filename_tcp)

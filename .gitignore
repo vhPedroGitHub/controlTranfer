@@ -23,3 +23,8 @@ __pycache__/
 
 lib
 modules
+archives
+
+sniff_scripts/new-traces/**/*
+sniff_scripts/sctplb_traces/**/*
+sniff_scripts/N2N3.pcap

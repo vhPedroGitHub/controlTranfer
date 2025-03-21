@@ -18,8 +18,8 @@ def ping_pods(pod_name, pods_list):
 def curl_pods(pod_name, pods_list):
     for pod in pods_list:
         try:
-            print(f"Haciendo ping desde el Pod {pod_name}...")
-            command = f"kubectl exec {pod_name} -- curl http://{pod.ip})"
+            print(f"Haciendo curl desde el Pod {pod_name}...")
+            command = f"kubectl exec {pod_name} -- curl http://{pod.ip}"
             result = os.system(command)
             if result == 0:
                 print(f"curl realizado con excito {pod_name}.")
