@@ -1,7 +1,7 @@
 from scapy.all import IP, TCP
 from scapy.sessions import TCPSession
 from classes.capture_pcap import CapturePcap
-from functions.other_functions import eliminar_archivos_en_directorio
+from functions.other_functions import eliminar_contenido_en_directorio
 import os
 from variables.init_vars import limit
 import logging
@@ -34,7 +34,7 @@ pcaps_conf = CapturePcap.from_directory("archives/tcpdump_files", limit)
 
 def get_packets(pcap_conf):
     print(f"Obteniendo paquetes de {pcap_conf.pod_name}")
-    packets = pcap_conf.capture
+    packets = pcap_conf
     loggers[pcap_conf.pod_name] = setup_logger(f"{log_file_path}/{pcap_conf.pod_name}.log", pcap_conf.pod_name)
     return [packets, pcap_conf.pod_name]
 
@@ -60,9 +60,11 @@ def generate_txt_packets(packets, pod_name, filename):
     # Usar un Lock para evitar condiciones de carrera
     with file_lock:
         with open(file_path, 'w') as f:
-            for packet in packets:
+            for packet in packets.capture:
                 if packet:  # Verificar que el paquete no esté vacío
-                    f.write(str(packet) + '\n')
+                    f.write(str(packet.summary()) + '\n')
+    
+    packets.reset_lecture()
 
 def write_string_to_file(string, pod_name, filename):
     print(f"Escribiendo en el archivo {pod_name}.txt")
@@ -75,7 +77,7 @@ def split_long_lines(text, max_length=80):
 
 def build_tcp_flow(packets, pod_name, filename):
     # Agrupar paquetes por sesión TCP
-    sessions = packets.sessions(session_extractor=TCPSession)
+    sessions = packets.capture.sessions(session_extractor=TCPSession)
     # input("Press Enter to continue...")
 
     # Diccionario para almacenar los datos de cada sesión TCP
@@ -108,7 +110,6 @@ def build_tcp_flow(packets, pod_name, filename):
     # Crear la carpeta si no existe
     if not os.path.exists(f"{filename}/{pod_name}"):
         os.makedirs(f"{filename}/{pod_name}")
-    eliminar_archivos_en_directorio(f"{filename}/{pod_name}")
 
     with file_lock:
         # Guardar todos los flujos en un solo archivo .txt
@@ -151,47 +152,38 @@ def build_tcp_flow(packets, pod_name, filename):
                     f.write(hex_flow)
                     f.write(b"\n\n")
 
+    packets.reset_lecture()
     return tcp_flows
 
 def anal_pcap(packets, pod_name, filename, filename_tcp):
     print(f"Analizando pcap de {pod_name}")
     count = 0
-    for i in packets:
+    for i in packets.capture:
         count += 1
+
+    packets.reset_lecture()
         
     stats = {
         "total_packets": count,
-        "ip_packets": 0,
-        "unique_ips": set(),
-        "packet_lengths": [],
         "protocols": {}
     }
 
-    for packet in packets:
-        if IP in packet:
-            stats["ip_packets"] += 1
-            stats["unique_ips"].add(packet[IP].src)
-            stats["unique_ips"].add(packet[IP].dst)
-            stats["packet_lengths"].append(len(packet))
-            proto = packet[IP].proto
-            proto_name = packet[IP].get_field('proto').i2s[proto]
+    for packet in packets.capture:
+        layers = packet.layers()
+        for layer in layers:
+            proto_name = layer.__name__
             if proto_name in stats["protocols"]:
                 stats["protocols"][proto_name] += 1
             else:
                 stats["protocols"][proto_name] = 1
-
-    stats["unique_ips"] = len(stats["unique_ips"])
-    stats["average_packet_length"] = sum(stats["packet_lengths"]) / len(stats["packet_lengths"]) if stats["packet_lengths"] else 0
+    
+    packets.reset_lecture()
 
     write_string_to_file(f'''
             Statistics for {pod_name}:
-    Total packets: {stats['total_packets']}
-    IP packets: {stats['ip_packets']}
-    Unique IPs: {stats['unique_ips']}
-    Average packet length: {stats['average_packet_length']:.2f}
     Protocols: {stats['protocols']}
                          '''
                             , pod_name, filename)
     
-    if stats["protocols"] != {} and "tcp" in stats["protocols"]:
+    if stats["protocols"] != {} and ("tcp" in stats["protocols"] or "TCP" in stats["protocols"]):
         build_tcp_flow(packets, pod_name, filename_tcp)

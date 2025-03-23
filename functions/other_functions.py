@@ -1,11 +1,18 @@
 import os
+import shutil
 
-def eliminar_archivos_en_directorio(directorio):
+def eliminar_contenido_en_directorio(directorio):
     try:
-        for archivo in os.listdir(directorio):
-            ruta_archivo = os.path.join(directorio, archivo)
-            if os.path.isfile(ruta_archivo):
-                os.remove(ruta_archivo)
-        print(f"Todos los archivos en el directorio '{directorio}' han sido eliminados.")
+        for elemento in os.listdir(directorio):
+            ruta_elemento = os.path.join(directorio, elemento)
+            
+            if os.path.isfile(ruta_elemento):
+                os.remove(ruta_elemento)
+            elif os.path.isdir(ruta_elemento):
+                try:
+                    os.rmdir(ruta_elemento)  # Elimina carpetas vacías
+                except OSError:
+                    shutil.rmtree(ruta_elemento)  # Elimina carpetas con contenido
+        print(f"Todos los archivos y carpetas en el directorio '{directorio}' han sido eliminados.")
     except Exception as e:
         print(f"Ocurrió un error: {e}")

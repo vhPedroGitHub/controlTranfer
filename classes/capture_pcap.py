@@ -11,6 +11,8 @@ def read_first_n_packets(file_path, n):
 
 class CapturePcap:
     def __init__(self, capture, pod_name, limit):
+        self.is_pcapreader = False
+        self.path = capture
         try:
             if limit > 0:
                 self.capture = read_first_n_packets(capture, limit)
@@ -18,6 +20,7 @@ class CapturePcap:
             else:
                 self.capture = PcapReader(capture)
                 print(self.capture)
+                self.is_pcapreader = True
 
             self.valid = True
         except Exception as e:
@@ -25,6 +28,10 @@ class CapturePcap:
             self.capture = None
             self.valid = False
         self.pod_name = pod_name
+    
+    def reset_lecture(self):
+        if self.is_pcapreader:
+            self.capture = PcapReader(self.path)
 
     @staticmethod
     def from_directory(directory, limit):

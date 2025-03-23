@@ -1,5 +1,5 @@
-from functions.operate_pcaps import *
-from functions.visualize_pcaps import *
+from functions.operate_pcaps import get_packets
+from functions.visualize_pcaps import create_graph
 
 from concurrent.futures import ThreadPoolExecutor
 

@@ -36,7 +36,7 @@ def add_arcs(packets, G, pods_dict, pod_name, services_dict_name_port={}):
     i = 0
     # Agregar aristas al grafo
     if services_dict_name_port != {}:
-        for packet in packets:
+        for packet in packets.capture:
                 src_port = packet[IP].sport
                 dst_port = packet[IP].dport
                 print(dst_port, src_port, pod_name)
@@ -63,7 +63,7 @@ def add_arcs(packets, G, pods_dict, pod_name, services_dict_name_port={}):
 
                         create_graph_dynamic_html(pod_name, G)
     else:
-        for packet in packets:
+        for packet in packets.capture:
             if IP in packet:
                 src_ip = packet[IP].src
                 dst_ip = packet[IP].dst
@@ -88,6 +88,8 @@ def add_arcs(packets, G, pods_dict, pod_name, services_dict_name_port={}):
                         plt.close()
 
                         create_graph_dynamic_html(pod_name, G)
+
+    packets.reset_lecture()
 
 
 def save_graph(G):
