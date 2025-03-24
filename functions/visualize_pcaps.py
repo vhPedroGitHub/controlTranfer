@@ -8,6 +8,14 @@ from functions.operate_pcaps import get_all_packets
 from functions.operate_pcaps import generate_txt_packets
 from functions.operate_pcaps import anal_pcap, loggers
 
+aris_color = 'blue'
+node_size = 1000
+radianes = 0.1
+font_size = 10
+arrowstyle = '->'
+arrows = True
+arrowsize = 15
+
 def create_graph_dynamic_html(pod_name, G):
     print(f"Creando grafo dinámico para el pod: {pod_name}")
     # Crear un grafo de PyVis
@@ -44,7 +52,7 @@ def add_arcs(packets, G, pods_dict, pod_name, services_dict_name_port={}):
 
                 src_name = f"{services_dict_name_port.get(src_port, src_port)}"
                 dst_name = f"{services_dict_name_port.get(dst_port, dst_port)}"
-                G.add_edge(src_name, dst_name, color='blue')
+                G.add_edge(src_name, dst_name, color=aris_color)
 
                 i += 1
 
@@ -71,7 +79,7 @@ def add_arcs(packets, G, pods_dict, pod_name, services_dict_name_port={}):
                 
                 src_name = f"{pods_dict.get(src_ip, src_ip)}"
                 dst_name = f"{pods_dict.get(dst_ip, dst_ip)}"
-                G.add_edge(src_name, dst_name, color='blue')
+                G.add_edge(src_name, dst_name, color=aris_color)
 
                 i += 1
                 if i % 1000 == 0:
@@ -92,28 +100,28 @@ def add_arcs(packets, G, pods_dict, pod_name, services_dict_name_port={}):
     packets.reset_lecture()
 
 
-def save_graph(G):
+def save_graph(G, node_size=node_size, font_size=font_size):
     print(f"Guardando el grafo")
     # Guardar el grafo final como una imagen
     pos = nx.spring_layout(G)
     plt.figure(figsize=(12, 8))
-    nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=1000)
-    nx.draw_networkx_labels(G, pos, font_size=10)
+    nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=node_size)
+    nx.draw_networkx_labels(G, pos, font_size=font_size)
 
     return pos
 
-def draw_arcs(G, pos):
+def draw_arcs(G, pos, radianes=radianes, arrows=arrows, arrowstyle=arrowstyle, arrowsize=arrowsize, node_size=node_size):
     print(f"Dibujando aristas")
     # Dibujar aristas curvas
     for u, v, data in G.edges(data=True):
-        rad = 0.1  # Ajustar la curvatura según la clave de la arista
+        rad = radianes  # Ajustar la curvatura según la clave de la arista
         nx.draw_networkx_edges(
             G, pos, edgelist=[(u, v)], 
             edge_color=data['color'], 
-            arrowstyle='->',  # Estilo de la punta de flecha
-            arrows=True,  # Habilitar las puntas de flecha
-            arrowsize=15,  # Aumentar el tamaño de las flechas
-            node_size=1000,  # Ajustar el tamaño de los nodos para que las flechas no se oculten
+            arrowstyle=arrowstyle,  # Estilo de la punta de flecha
+            arrows=arrows,  # Habilitar las puntas de flecha
+            arrowsize=arrowsize,  # Aumentar el tamaño de las flechas
+            node_size=node_size,  # Ajustar el tamaño de los nodos para que las flechas no se oculten
             connectionstyle=f"arc3,rad={rad}"  # Hacer las aristas curvas
         )
 
@@ -135,7 +143,7 @@ def create_graph(packets, pod_name, pods_dict, services_dict_name_port={}):
     create_graph_dynamic_html(pod_name, G)
     
     generate_txt_packets(packets, pod_name, "archives/tcpdumps/pods_traffic")
-    anal_pcap(packets, pod_name, "archives/tcpdumps/statistics_pods_traffic", "archives/tcpdumps/content_tcp")
+    anal_pcap(packets, pod_name, "archives/tcpdumps/statistics_pods_traffic", "archives/tcpdumps/content_tcp", pods_dict)
 
 def create_graph_using_all_pcaps(pods_dict, pcaps_conf, services_dict_name_port={}):
     print(f"Creando grafo para todos los pods")
@@ -144,10 +152,10 @@ def create_graph_using_all_pcaps(pods_dict, pcaps_conf, services_dict_name_port=
     for packets, pod_name in all_packets:
 
         add_arcs(packets, G, pods_dict, pod_name, services_dict_name_port)
-        pos = save_graph(G)
+        pos = save_graph(G, node_size=500)
 
         # Dibujar aristas curvas
-        draw_arcs(G, pos)
+        draw_arcs(G, pos, node_size=500)
         
     plt.savefig(f'archives/imgs/pods_traffic/all.png')
     plt.close()
@@ -176,7 +184,7 @@ def update_graph(frame, G, connections, ax):
     if frame == 0:
         global pos
         pos = nx.spring_layout(G)  # Posición de los nodos solo en el primer frame
-    nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=1000, ax=ax)
+    nx.draw_networkx_nodes(G, pos, node_color='lightblue', node_size=node_size, ax=ax)
     nx.draw_networkx_labels(G, pos, font_size=5, ax=ax)
 
     # Dibujar aristas curvas
@@ -214,7 +222,7 @@ def operate_pcap(pods_dict, packets):
 
         # Agregar todas las conexiones al grafo
         for src_ip, dst_ip in connections:
-            G.add_edge(src_ip, dst_ip, color='blue')
+            G.add_edge(src_ip, dst_ip, color=aris_color)
 
         # Configurar la figura y el eje
         fig, ax = plt.subplots()

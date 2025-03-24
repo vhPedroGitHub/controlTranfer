@@ -60,11 +60,15 @@ def generate_txt_packets(packets, pod_name, filename):
     # Usar un Lock para evitar condiciones de carrera
     with file_lock:
         with open(file_path, 'w') as f:
-            for packet in packets.capture:
-                if packet:  # Verificar que el paquete no esté vacío
-                    f.write(str(packet.summary()) + '\n')
-    
-    packets.reset_lecture()
+            try:
+                for packet in packets.capture:
+                    if packet:  # Verificar que el paquete no esté vacío
+                        f.write(str(packet.summary()) + '\n')
+                packets.reset_lecture()
+            except: 
+                for packet in packets:
+                    if packet:
+                        f.write(str(packet.summary()) + '\n')
 
 def write_string_to_file(string, pod_name, filename):
     print(f"Escribiendo en el archivo {pod_name}.txt")
@@ -155,7 +159,12 @@ def build_tcp_flow(packets, pod_name, filename):
     packets.reset_lecture()
     return tcp_flows
 
-def anal_pcap(packets, pod_name, filename, filename_tcp):
+def format_dict_src_dst(dict_src_dst):
+    formatted = "\n".join([f"{src} : {dst}" for src, dst in dict_src_dst.items()])
+    return formatted
+
+
+def anal_pcap(packets, pod_name, filename, filename_tcp, pods_dict):
     print(f"Analizando pcap de {pod_name}")
     count = 0
     for i in packets.capture:
@@ -168,7 +177,22 @@ def anal_pcap(packets, pod_name, filename, filename_tcp):
         "protocols": {}
     }
 
+    dict_src_dst = {}
     for packet in packets.capture:
+        if packet.haslayer(IP):
+            src_ip = packet[IP].src
+            dst_ip = packet[IP].dst
+            
+            src_name = f"{pods_dict.get(src_ip, src_ip)}"
+            dst_name = f"{pods_dict.get(dst_ip, dst_ip)}"
+
+            src_dst = f"{src_name} ----> {dst_name}"
+
+            if src_dst in dict_src_dst:
+                dict_src_dst[src_dst] += 1
+            else: 
+                dict_src_dst[src_dst] = 1
+
         layers = packet.layers()
         for layer in layers:
             proto_name = layer.__name__
@@ -180,8 +204,15 @@ def anal_pcap(packets, pod_name, filename, filename_tcp):
     packets.reset_lecture()
 
     write_string_to_file(f'''
-            Statistics for {pod_name}:
-    Protocols: {stats['protocols']}
+Statistics for {pod_name}:
+
+
+Protocols: {stats['protocols']}
+
+
+src --> dst:
+
+{format_dict_src_dst(dict_src_dst)}
                          '''
                             , pod_name, filename)
     
