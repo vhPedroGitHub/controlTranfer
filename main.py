@@ -31,8 +31,7 @@ else:
     create_all_graph(pods_dict, pcaps_conf, services_dict_name_port)
 
 # Comparar los archivos PCAP
-consolidate_packets = analyze_multiple_pcaps(pcaps_conf)
-generate_txt_packets(consolidate_packets, "all", "archives/tcpdumps")
+consolidate_packets = analyze_multiple_pcaps(pcaps_conf, seePerSecond)
 
 # for i in range(len(pcaps_conf)):
 #     for j in range(len(pcaps_conf)):

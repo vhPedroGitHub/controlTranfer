@@ -16,6 +16,7 @@ parser.add_argument('--turbo', type=bool, help='Con esta opcion puedes especific
 parser.add_argument('--limit', type=int, help='limite a la hora de crear rdcap')
 parser.add_argument('--usp', type=bool, help='booleano para especificar si queremos utilizar los puertos de los servicios o no')
 parser.add_argument('--lj', type=bool, help='booleano para especificar si queremos utilizar un json para cargar configuraciones')
+parser.add_argument('--seePerSecond', type=bool, help='booleano para especificar si queremos ver imagenes del trafico por segundo')
 
 
 # Parsear los argumentos
@@ -66,6 +67,7 @@ if lj:
 turbo = False
 ping = False
 curl = False
+seePerSecond = False
 limit = 0
 
 # asignar a las variables con valores por defecto los valores pasados por la linea de comando
@@ -80,3 +82,6 @@ if args.turbo:
 
 if args.limit:
     limit = args.limit
+
+if args.seePerSecond:
+    seePerSecond = args.seePerSecond

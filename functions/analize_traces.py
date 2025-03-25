@@ -1,6 +1,9 @@
 from scapy.all import IP, TCP
 from scapy.utils import rdpcap
 from datetime import datetime
+from functions.operate_pcaps import generate_txt_packets
+from variables.init_vars import pods_dict
+from functions.visualize_pcaps import create_graph_per_second
 
 def search_packet_share(pcap_origin, pcap_dest):
     """
@@ -46,7 +49,7 @@ def search_packet_share(pcap_origin, pcap_dest):
 
     return packets_share
 
-def consolidate_packets_by_time(packets):
+def consolidate_packets_by_time(packets, count, is_create_graph=False):
     """
     Consolida paquetes consecutivos que son iguales, manteniendo el tiempo del último paquete.
 
@@ -73,10 +76,14 @@ def consolidate_packets_by_time(packets):
 
     # Append the last packet
     consolidated_packets.append(current_packet[1])
+    generate_txt_packets(consolidated_packets, f"all-{count}", "archives/tcpdumps/all_traffic_order_by_time", pods_dict)
+    if is_create_graph:
+        create_graph_per_second(consolidated_packets, pods_dict)
+    consolidated_packets = []
 
     return consolidated_packets
 
-def analyze_multiple_pcaps(pcaps_conf):
+def analyze_multiple_pcaps(pcaps_conf, seePerSecond):
     """
     Analiza múltiples archivos PCAP y organiza el tráfico según la fecha y hora en que ocurrió.
 
@@ -84,7 +91,7 @@ def analyze_multiple_pcaps(pcaps_conf):
     :return: Lista de tuplas (timestamp, packet) ordenadas cronológicamente.
     """
     all_packets = []
-
+    count = 0
     # Leer y extraer paquetes de cada archivo PCAP
     for file in pcaps_conf:
         file.reset_lecture()
@@ -99,6 +106,6 @@ def analyze_multiple_pcaps(pcaps_conf):
     all_packets.sort(key=lambda x: x[0])
 
     # Consolidar los paquetes por tiempo
-    consolidated_packets = consolidate_packets_by_time(all_packets)
+    consolidated_packets = consolidate_packets_by_time(all_packets, count, seePerSecond)
 
     return consolidated_packets

@@ -6,6 +6,7 @@ import os
 from variables.init_vars import limit
 import logging
 from threading import Lock
+import datetime
 
 loggers = {}
 log_file_path = f"archives/logs"
@@ -48,7 +49,7 @@ def get_all_packets(pcaps_conf):
 # Crear un Lock global para sincronizar la escritura en el archivo
 file_lock = Lock()
 
-def generate_txt_packets(packets, pod_name, filename):
+def generate_txt_packets(packets, pod_name, filename, pods_dict={}):
     print(f"Generando archivo de texto para {pod_name}")
     
     # Asegurarse de que el directorio existe
@@ -62,13 +63,37 @@ def generate_txt_packets(packets, pod_name, filename):
         with open(file_path, 'w') as f:
             try:
                 for packet in packets.capture:
-                    if packet:  # Verificar que el paquete no esté vacío
-                        f.write(str(packet.summary()) + '\n')
+                    if IP in packet:
+                        src_ip = packet[IP].src
+                        dst_ip = packet[IP].dst
+                        
+                        src_name = f"{pods_dict.get(src_ip, src_ip)}"
+                        dst_name = f"{pods_dict.get(dst_ip, dst_ip)}"
+                        if packet:  # Verificar que el paquete no esté vacío
+                            timestamp = packet.time
+                            time = datetime.datetime.fromtimestamp(float(timestamp))
+                            f.write(f"source: {src_name}  ---->  dest: {dst_name} \n{time}\n - {str(packet.summary())}\n\n")
+                    else:
+                        timestamp = packet.time
+                        time = datetime.datetime.fromtimestamp(float(timestamp))
+                        f.write(f"{time}\n - {str(packet.summary())}\n\n")
                 packets.reset_lecture()
             except: 
                 for packet in packets:
-                    if packet:
-                        f.write(str(packet.summary()) + '\n')
+                    if IP in packet:
+                        src_ip = packet[IP].src
+                        dst_ip = packet[IP].dst
+                        
+                        src_name = f"{pods_dict.get(src_ip, src_ip)}"
+                        dst_name = f"{pods_dict.get(dst_ip, dst_ip)}"
+                        if packet:  # Verificar que el paquete no esté vacío
+                            timestamp = packet.time
+                            time = datetime.datetime.fromtimestamp(float(timestamp))
+                            f.write(f"source: {src_name}  ---->  dest: {dst_name} \n{time}\n - {str(packet.summary())}\n\n")
+                    else:
+                        timestamp = packet.time
+                        time = datetime.datetime.fromtimestamp(float(timestamp))
+                        f.write(f"{time}\n - {str(packet.summary())}\n\n")
 
 def write_string_to_file(string, pod_name, filename):
     print(f"Escribiendo en el archivo {pod_name}.txt")

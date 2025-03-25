@@ -9,7 +9,7 @@ def process_pcap(pcap_conf, pods_dict, services_dict_name_port={}):
     # Aquí va la lógica para procesar un solo archivo .pcap
     create_graph(packets, pod_name, pods_dict, services_dict_name_port)
 
-def process_all_pcaps(pcaps_conf, pods_dict, services_dict_name_port={}, max_workers=4):
+def process_all_pcaps(pcaps_conf, pods_dict, services_dict_name_port={}, max_workers=8):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Envía cada archivo .pcap al ProcessPoolExecutor
         futures = [executor.submit(process_pcap, pcap_conf, pods_dict, services_dict_name_port) for pcap_conf in pcaps_conf]

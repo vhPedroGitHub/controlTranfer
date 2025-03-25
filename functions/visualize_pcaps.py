@@ -7,6 +7,7 @@ from pyvis.network import Network
 from functions.operate_pcaps import get_all_packets
 from functions.operate_pcaps import generate_txt_packets
 from functions.operate_pcaps import anal_pcap, loggers
+import os
 
 aris_color = 'blue'
 node_size = 1000
@@ -99,6 +100,17 @@ def add_arcs(packets, G, pods_dict, pod_name, services_dict_name_port={}):
 
     packets.reset_lecture()
 
+def add_arcs_per_second(packets, G, pods_dict):
+    # Agregar aristas al grafo
+    for packet in packets:
+        if IP in packet:
+            src_ip = packet[IP].src
+            dst_ip = packet[IP].dst
+            
+            src_name = f"{pods_dict.get(src_ip, src_ip)}"
+            dst_name = f"{pods_dict.get(dst_ip, dst_ip)}"
+            G.add_edge(src_name, dst_name, color=aris_color)
+
 
 def save_graph(G, node_size=node_size, font_size=font_size):
     print(f"Guardando el grafo")
@@ -142,7 +154,7 @@ def create_graph(packets, pod_name, pods_dict, services_dict_name_port={}):
 
     create_graph_dynamic_html(pod_name, G)
     
-    generate_txt_packets(packets, pod_name, "archives/tcpdumps/pods_traffic")
+    generate_txt_packets(packets, pod_name, "archives/tcpdumps/pods_traffic", pods_dict)
     anal_pcap(packets, pod_name, "archives/tcpdumps/statistics_pods_traffic", "archives/tcpdumps/content_tcp", pods_dict)
 
 def create_graph_using_all_pcaps(pods_dict, pcaps_conf, services_dict_name_port={}):
@@ -169,6 +181,58 @@ def create_all_graph(pods_dict, pcaps_conf, services_dict_name_port={}):
         create_graph(packets, pod_name, pods_dict, services_dict_name_port)
     create_graph_using_all_pcaps(pods_dict, pcaps_conf, services_dict_name_port)
 
+
+def create_graph_per_second(packets, pods_dict, output_folder="archives/imgs/pods_traffic/image_persecond", seconds=1):
+    print(f"Generando imágenes de tráfico por segundo")
+    
+    G = nx.DiGraph()
+    last_timestamp = None
+    counter = 0  # Para nombrar las imágenes de forma secuencial
+
+    # Asegurar que la carpeta de salida existe
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+        os.makedirs(f"{output_folder}/traffic")
+
+    packs = []
+
+    for packet in packets:
+        if not hasattr(packet, 'time'):
+            continue  # Si el paquete no tiene un campo de tiempo, lo ignoramos
+
+        current_time = packet.time
+
+        # Si es el primer paquete, inicializamos last_timestamp
+        if last_timestamp is None:
+            last_timestamp = current_time
+
+        # Solo actualizamos el grafo si ha pasado 1 segundo desde la última imagen generada
+        if current_time - last_timestamp >= seconds:
+            last_timestamp = current_time
+            counter += seconds  # Incrementar el contador para generar nombres de archivo únicos
+            
+            # Agregar los arcos correspondientes al grafo
+            add_arcs_per_second(packs, G, pods_dict)
+            pos = save_graph(G)
+
+            # Dibujar aristas curvas
+            draw_arcs(G, pos)
+
+            # Guardar la imagen con un nombre único
+            image_path = os.path.join(output_folder, f"segundo-{counter}.png")
+            plt.savefig(image_path)
+            plt.close()
+            print(f"Imagen guardada: {image_path}")
+
+            generate_txt_packets(packs, f"segundo-{counter}", f"{output_folder}/traffic", pods_dict)
+
+            # Limpiar la lista de paquetes
+            packs = []
+            G.clear()
+
+        packs.append(packet)
+
+    print("Proceso completado.")
 
 # funciones animadas
 # Función para actualizar el grafo en cada fotograma
