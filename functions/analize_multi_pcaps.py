@@ -4,40 +4,7 @@ from datetime import datetime
 from variables.init_vars import pods_dict
 from functions.visualize_pcaps import create_graph_per_second
 from functions.write_pcaps import *
-
-def consolidate_packets_by_time(packets, count, is_create_graph=False):
-    """
-    Consolida paquetes consecutivos que son iguales, manteniendo el tiempo del último paquete.
-
-    :param packets: Lista de tuplas (timestamp, packet) ordenadas cronológicamente.
-    :return: Lista de tuplas (timestamp, packet) con paquetes consolidados.
-    """
-    if not packets:
-        return []
-
-    consolidated_packets = []
-    current_packet = packets[0]
-    
-    for next_packet in packets[1:]:
-        if (current_packet[1][IP].src == next_packet[1][IP].src and
-            current_packet[1][IP].dst == next_packet[1][IP].dst and
-            current_packet[1][TCP].sport == next_packet[1][TCP].sport and
-            current_packet[1][TCP].dport == next_packet[1][TCP].dport and
-            current_packet[1][TCP].seq == next_packet[1][TCP].seq):
-            # Update the timestamp to the latest packet's timestamp
-            current_packet = (next_packet[0] ,current_packet[1])
-        else:
-            consolidated_packets.append(current_packet[1])
-            current_packet = next_packet
-
-    # Append the last packet
-    consolidated_packets.append(current_packet[1])
-    generate_txt_packets(consolidated_packets, f"all-{count}", "archives/tcpdumps/all_traffic_order_by_time", pods_dict)
-    if is_create_graph:
-        create_graph_per_second(consolidated_packets, pods_dict)
-    consolidated_packets = []
-
-    return consolidated_packets
+from functions.operate_pcaps import *
 
 def analyze_multiple_pcaps(pcaps_conf, seePerSecond):
     """
@@ -47,7 +14,13 @@ def analyze_multiple_pcaps(pcaps_conf, seePerSecond):
     :return: Lista de tuplas (timestamp, packet) ordenadas cronológicamente.
     """
     all_packets = []
-    count = 0
+
+    dict_packets_to_analize = {
+        "packets_sumary": [],
+        "all_packets": [],
+        "only_payloads": []
+    }
+
     # Leer y extraer paquetes de cada archivo PCAP
     for file in pcaps_conf:
         file.reset_lecture()
@@ -61,10 +34,12 @@ def analyze_multiple_pcaps(pcaps_conf, seePerSecond):
     # Ordenar los paquetes por la marca de tiempo
     all_packets.sort(key=lambda x: x[0])
 
-    # Consolidar los paquetes por tiempo
-    consolidated_packets = consolidate_packets_by_time(all_packets, count, seePerSecond)
+    dict_packets_to_analize["packets_sumary"] = consolidate_packets(all_packets, 0)
+    dict_packets_to_analize["all_packets"] = get_all_packets(all_packets, 1)
+    dict_packets_to_analize["only_payloads"] = consolidate_packets_with_payload(all_packets, 2)
 
-    return consolidated_packets
+    if seePerSecond:
+        create_graph_per_second(all_packets, pods_dict, dict_packets_to_analize)
 
 def search_packet_share(pcap_origin, pcap_dest):
     """

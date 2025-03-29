@@ -1,13 +1,14 @@
-from scapy.all import IP, TCP
+from scapy.all import IP, TCP, Raw
 from scapy.sessions import TCPSession
 from classes.capture_pcap import CapturePcap
-from functions.other_functions import eliminar_contenido_en_directorio
+from functions.other_functions import delete_directory_content
 import os
 from variables.init_vars import limit
 import logging
 from threading import Lock
 import datetime
 from functions.write_pcaps import *
+from variables.init_vars import pods_dict
 
 loggers = {}
 log_file_path = f"archives/logs"
@@ -186,3 +187,77 @@ src --> dst:
     
     if stats["protocols"] != {} and ("tcp" in stats["protocols"] or "TCP" in stats["protocols"]):
         build_tcp_flow(packets, pod_name, filename_tcp)
+
+# estas funciones son creadas para operar con los paquetes creadas por la funcion analize multiple pcaps
+def consolidate_packets(packets, count):
+    """
+    Consolida paquetes consecutivos que son iguales, manteniendo el tiempo del último paquete.
+
+    :param packets: Lista de tuplas (timestamp, packet) ordenadas cronológicamente.
+    :return: Lista de tuplas (timestamp, packet) con paquetes consolidados.
+    """
+    if not packets:
+        return []
+
+    consolidated_packets = []
+    current_packet = packets[0]
+    
+    for next_packet in packets[1:]:
+        if (current_packet[1][IP].src == next_packet[1][IP].src and
+            current_packet[1][IP].dst == next_packet[1][IP].dst and
+            current_packet[1][TCP].sport == next_packet[1][TCP].sport and
+            current_packet[1][TCP].dport == next_packet[1][TCP].dport and
+            current_packet[1][TCP].seq == next_packet[1][TCP].seq):
+            # Update the timestamp to the latest packet's timestamp
+            current_packet = (next_packet[0] ,current_packet[1])
+        else:
+            consolidated_packets.append(current_packet[1])
+            current_packet = next_packet
+
+    # Append the last packet
+    consolidated_packets.append(current_packet[1])
+    generate_txt_packets(consolidated_packets, f"all-{count}-consolidate-packets", "archives/tcpdumps/all_traffic_order_by_time", pods_dict)
+
+    return consolidated_packets
+
+def get_all_packets(packets, count):
+    """
+    Consolida paquetes consecutivos que son iguales, manteniendo el tiempo del último paquete.
+
+    :param packets: Lista de tuplas (timestamp, packet) ordenadas cronológicamente.
+    :return: Lista de tuplas (timestamp, packet) con paquetes consolidados.
+    """
+    if not packets:
+        return []
+
+    packets_to_return = []
+    
+    for packet in packets[1:]:
+        packets_to_return.append(packet[1])
+
+    generate_txt_packets(packets_to_return, f"all-{count}-all-packets", "archives/tcpdumps/all_traffic_order_by_time", pods_dict)
+
+    return packets_to_return
+
+def consolidate_packets_with_payload(packets, count):
+    """
+    Consolida paquetes consecutivos que son iguales y tienen payload, manteniendo el tiempo del último paquete.
+
+    :param packets: Lista de tuplas (timestamp, packet) ordenadas cronológicamente.
+    :return: Lista de tuplas (timestamp, packet) con paquetes consolidados que tienen payload.
+    """
+    if not packets:
+        return []
+    
+    # Primero filtramos solo los paquetes con payload
+    payload_packets = []
+    for packet in packets:
+        if packet.haslayer(TCP) and packet.haslayer(Raw):
+            payload_packets.append(packet[1])
+    
+    if not payload_packets:
+        return []
+    
+    generate_txt_packets(payload_packets, f"all-{count}-payloads", "archives/tcpdumps/all_traffic_order_by_time", pods_dict)
+
+    return payload_packets

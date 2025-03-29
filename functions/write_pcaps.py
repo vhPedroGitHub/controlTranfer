@@ -1,7 +1,7 @@
 from scapy.all import IP, TCP
 from scapy.sessions import TCPSession
 from classes.capture_pcap import CapturePcap
-from functions.other_functions import eliminar_contenido_en_directorio
+from functions.other_functions import delete_directory_content
 import os
 from variables.init_vars import limit
 import logging

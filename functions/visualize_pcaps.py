@@ -182,7 +182,7 @@ def create_all_graph(pods_dict, pcaps_conf, services_dict_name_port={}):
     create_graph_using_all_pcaps(pods_dict, pcaps_conf, services_dict_name_port)
 
 
-def create_graph_per_second(packets, pods_dict, output_folder="archives/imgs/pods_traffic/image_persecond", seconds=1):
+def create_graph_per_second(packets, pods_dict, dict_packets_to_analize={}, output_folder="archives/imgs/pods_traffic/image_persecond", seconds=1):
     print(f"Generando imágenes de tráfico por segundo")
     
     G = nx.DiGraph()
@@ -196,41 +196,45 @@ def create_graph_per_second(packets, pods_dict, output_folder="archives/imgs/pod
 
     packs = []
 
-    for packet in packets:
-        if not hasattr(packet, 'time'):
-            continue  # Si el paquete no tiene un campo de tiempo, lo ignoramos
+    for key, value in dict_packets_to_analize.items():
+        for packet in value:
+            if not hasattr(packet, 'time'):
+                continue  # Si el paquete no tiene un campo de tiempo, lo ignoramos
 
-        current_time = packet.time
+            current_time = packet.time
 
-        # Si es el primer paquete, inicializamos last_timestamp
-        if last_timestamp is None:
-            last_timestamp = current_time
+            # Si es el primer paquete, inicializamos last_timestamp
+            if last_timestamp is None:
+                last_timestamp = current_time
 
-        # Solo actualizamos el grafo si ha pasado 1 segundo desde la última imagen generada
-        if current_time - last_timestamp >= seconds:
-            last_timestamp = current_time
-            counter += seconds  # Incrementar el contador para generar nombres de archivo únicos
-            
-            # Agregar los arcos correspondientes al grafo
-            add_arcs_per_second(packs, G, pods_dict)
-            pos = save_graph(G)
+            # Solo actualizamos el grafo si ha pasado 1 segundo desde la última imagen generada
+            if current_time - last_timestamp >= seconds:
+                last_timestamp = current_time
+                counter += seconds  # Incrementar el contador para generar nombres de archivo únicos
+                
+                # Agregar los arcos correspondientes al grafo
+                add_arcs_per_second(packs, G, pods_dict)
+                pos = save_graph(G)
 
-            # Dibujar aristas curvas
-            draw_arcs(G, pos)
+                # Dibujar aristas curvas
+                draw_arcs(G, pos)
 
-            # Guardar la imagen con un nombre único
-            image_path = os.path.join(output_folder, f"segundo-{counter}.png")
-            plt.savefig(image_path)
-            plt.close()
-            print(f"Imagen guardada: {image_path}")
+                # Guardar la imagen con un nombre único
+                image_path = os.path.join(output_folder, f"segundo-{counter}.png")
+                plt.savefig(image_path)
+                plt.close()
+                print(f"Imagen guardada: {image_path}")
 
-            generate_txt_packets(packs, f"segundo-{counter}", f"{output_folder}/traffic", pods_dict)
+                if not os.path.exists(f"{output_folder}/traffic/segundo-{counter}"):
+                    os.makedirs(f"{output_folder}/traffic")
 
-            # Limpiar la lista de paquetes
-            packs = []
-            G.clear()
+                generate_txt_packets(packs, f"segundo-{counter}-{key}", f"{output_folder}/traffic/segundo-{counter}", pods_dict)
 
-        packs.append(packet)
+                # Limpiar la lista de paquetes
+                packs = []
+                G.clear()
+
+            packs.append(packet)
 
     print("Proceso completado.")
 

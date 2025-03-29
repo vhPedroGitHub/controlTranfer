@@ -1,9 +1,9 @@
 # obteniendo una lista de pods con los datos que nos interesan
 from concurrent.futures import ProcessPoolExecutor
-from functions.other_functions import eliminar_contenido_en_directorio
-from functions.analize_traces import search_packet_share
-from functions.analize_traces import analyze_multiple_pcaps
-from functions.analize_traces import consolidate_packets_by_time
+from functions.other_functions import delete_directory_content
+from functions.analize_multi_pcaps import search_packet_share
+from functions.analize_multi_pcaps import analyze_multiple_pcaps
+from functions.analize_multi_pcaps import consolidate_packets_by_time
 from functions.operate_pcaps import generate_txt_packets
 from functions.analize_grpc_packets import process_pcap_grpc, process_pcap_grpc_scapy
 from functions.paralelize import *
@@ -18,12 +18,12 @@ print(services_dict_name_port)
 print(pcaps_conf)
 
 # eliminamos los archivos existentes
-eliminar_contenido_en_directorio("archives/tcpdumps/pods_traffic")
-eliminar_contenido_en_directorio("archives/tcpdumps/statistics_pods_traffic")
-eliminar_contenido_en_directorio("archives/tcpdumps/content_tcp")
-eliminar_contenido_en_directorio("archives/logs")
-eliminar_contenido_en_directorio("archives/imgs/dinamic_html")
-eliminar_contenido_en_directorio("archives/imgs/pods_traffic")
+delete_directory_content("archives/tcpdumps/pods_traffic")
+delete_directory_content("archives/tcpdumps/statistics_pods_traffic")
+delete_directory_content("archives/tcpdumps/content_tcp")
+delete_directory_content("archives/logs")
+delete_directory_content("archives/imgs/dinamic_html")
+delete_directory_content("archives/imgs/pods_traffic")
 
 if turbo:
     process_all_pcaps(pcaps_conf, pods_dict, services_dict_name_port)
@@ -31,8 +31,8 @@ if turbo:
 else:
     create_all_graph(pods_dict, pcaps_conf, services_dict_name_port)
 
-# Comparar los archivos PCAP
-consolidate_packets = analyze_multiple_pcaps(pcaps_conf, seePerSecond)
+# Analizar todos los pcaps
+analyze_multiple_pcaps(pcaps_conf, seePerSecond)
 
 
 

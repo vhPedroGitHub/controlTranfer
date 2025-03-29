@@ -1,7 +1,7 @@
 import os
 import shutil
 
-def eliminar_contenido_en_directorio(directorio):
+def delete_directory_content(directorio):
     try:
         for elemento in os.listdir(directorio):
             ruta_elemento = os.path.join(directorio, elemento)
