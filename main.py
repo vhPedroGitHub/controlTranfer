@@ -18,25 +18,22 @@ print(services_dict_name_port)
 print(pcaps_conf)
 
 # eliminamos los archivos existentes
-# eliminar_contenido_en_directorio("archives/tcpdumps/pods_traffic")
-# eliminar_contenido_en_directorio("archives/tcpdumps/statistics_pods_traffic")
-# eliminar_contenido_en_directorio("archives/tcpdumps/content_tcp")
-# eliminar_contenido_en_directorio("archives/logs")
-# eliminar_contenido_en_directorio("archives/imgs/dinamic_html")
-# eliminar_contenido_en_directorio("archives/imgs/pods_traffic")
+eliminar_contenido_en_directorio("archives/tcpdumps/pods_traffic")
+eliminar_contenido_en_directorio("archives/tcpdumps/statistics_pods_traffic")
+eliminar_contenido_en_directorio("archives/tcpdumps/content_tcp")
+eliminar_contenido_en_directorio("archives/logs")
+eliminar_contenido_en_directorio("archives/imgs/dinamic_html")
+eliminar_contenido_en_directorio("archives/imgs/pods_traffic")
 
-# if turbo:
-#     process_all_pcaps(pcaps_conf, pods_dict, services_dict_name_port)
+if turbo:
+    process_all_pcaps(pcaps_conf, pods_dict, services_dict_name_port)
 
-# else:
-#     create_all_graph(pods_dict, pcaps_conf, services_dict_name_port)
+else:
+    create_all_graph(pods_dict, pcaps_conf, services_dict_name_port)
 
 # Comparar los archivos PCAP
-# consolidate_packets = analyze_multiple_pcaps(pcaps_conf, seePerSecond)
+consolidate_packets = analyze_multiple_pcaps(pcaps_conf, seePerSecond)
 
-
-# process_pcap_grpc(pcaps_conf[0].path)
-process_pcap_grpc_scapy(pcaps_conf[0].path)
 
 
 

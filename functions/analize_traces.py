@@ -1,53 +1,9 @@
 from scapy.all import IP, TCP
 from scapy.utils import rdpcap
 from datetime import datetime
-from functions.operate_pcaps import generate_txt_packets
 from variables.init_vars import pods_dict
 from functions.visualize_pcaps import create_graph_per_second
-
-def search_packet_share(pcap_origin, pcap_dest):
-    """
-    Busca si un paquete de un archivo PCAP (origen) fue reenviado por el servicio del otro PCAP (destino).
-    
-    :param pcap_origin: Lista de paquetes del PCAP de origen.
-    :param pcap_dest: Lista de paquetes del PCAP de destino.
-    :return: Lista de tuplas (paquete_origen, ip_destino_reenvio) que fueron reenviados.
-    """
-    # Crear una lista para almacenar los paquetes reenviados y sus destinos
-    packets_share = []
-
-    pcap_origin.reset_lecture()
-    pcap_dest.reset_lecture()
-
-    print(pcap_dest, pcap_origin)
-    print(pcap_origin.capture)
-    print(pcap_dest.capture)
-
-    # Extraer firmas únicas de los paquetes del destino
-    firms_dest = {}
-    for packet in pcap_dest.capture:
-        if packet.haslayer(IP) and packet.haslayer(TCP):
-            firma = (
-                packet[IP].src,  # IP origen del paquete en el destino
-                packet[TCP].sport,  # Puerto origen del paquete en el destino
-                packet[TCP].seq   # Número de secuencia TCP
-            )
-            firms_dest[firma] = packet[IP].dst  # Guardar la IP destino del paquete en el destino
-
-    # Buscar coincidencias entre paquetes de origen y destino
-    for packet in pcap_origin.capture:
-        if packet.haslayer(IP) and packet.haslayer(TCP):
-            firma = (
-                packet[IP].dst,  # IP destino del paquete en el origen
-                packet[TCP].dport,  # Puerto destino del paquete en el origen
-                packet[TCP].seq   # Número de secuencia TCP
-            )
-            if firma in firms_dest:
-                ip_reenvio = firms_dest[firma]
-                if ip_reenvio != packet[IP].src:  # Verificar que fue enviado a una IP distinta
-                    packets_share.append((packet, ip_reenvio))
-
-    return packets_share
+from functions.write_pcaps import *
 
 def consolidate_packets_by_time(packets, count, is_create_graph=False):
     """
@@ -109,3 +65,47 @@ def analyze_multiple_pcaps(pcaps_conf, seePerSecond):
     consolidated_packets = consolidate_packets_by_time(all_packets, count, seePerSecond)
 
     return consolidated_packets
+
+def search_packet_share(pcap_origin, pcap_dest):
+    """
+    Busca si un paquete de un archivo PCAP (origen) fue reenviado por el servicio del otro PCAP (destino).
+    
+    :param pcap_origin: Lista de paquetes del PCAP de origen.
+    :param pcap_dest: Lista de paquetes del PCAP de destino.
+    :return: Lista de tuplas (paquete_origen, ip_destino_reenvio) que fueron reenviados.
+    """
+    # Crear una lista para almacenar los paquetes reenviados y sus destinos
+    packets_share = []
+
+    pcap_origin.reset_lecture()
+    pcap_dest.reset_lecture()
+
+    print(pcap_dest, pcap_origin)
+    print(pcap_origin.capture)
+    print(pcap_dest.capture)
+
+    # Extraer firmas únicas de los paquetes del destino
+    firms_dest = {}
+    for packet in pcap_dest.capture:
+        if packet.haslayer(IP) and packet.haslayer(TCP):
+            firma = (
+                packet[IP].src,  # IP origen del paquete en el destino
+                packet[TCP].sport,  # Puerto origen del paquete en el destino
+                packet[TCP].seq   # Número de secuencia TCP
+            )
+            firms_dest[firma] = packet[IP].dst  # Guardar la IP destino del paquete en el destino
+
+    # Buscar coincidencias entre paquetes de origen y destino
+    for packet in pcap_origin.capture:
+        if packet.haslayer(IP) and packet.haslayer(TCP):
+            firma = (
+                packet[IP].dst,  # IP destino del paquete en el origen
+                packet[TCP].dport,  # Puerto destino del paquete en el origen
+                packet[TCP].seq   # Número de secuencia TCP
+            )
+            if firma in firms_dest:
+                ip_reenvio = firms_dest[firma]
+                if ip_reenvio != packet[IP].src:  # Verificar que fue enviado a una IP distinta
+                    packets_share.append((packet, ip_reenvio))
+
+    return packets_share
