@@ -1,4 +1,4 @@
-from scapy.all import IP, Raw
+from scapy.all import IP, Raw, UDP, TCP
 import networkx as nx
 import matplotlib
 matplotlib.use('Agg')
@@ -140,7 +140,8 @@ def draw_arcs(G, pos, radianes=radianes, arrows=arrows, arrowstyle=arrowstyle, a
 
 def generate_video_traffic(packets, pods_dict, output_file):
     """
-    Genera un video que muestra el tráfico entre nodos, resaltando el paquete activo en cada momento.
+    Genera un video que muestra el tráfico entre nodos, con 1 segundo por paquete
+    y mostrando el resumen de cada paquete.
     
     :param packets: Lista de tuplas (timestamp, packet) ordenadas cronológicamente
     :param pods_dict: Diccionario {ip: {'name': pod_name}}
@@ -150,151 +151,110 @@ def generate_video_traffic(packets, pods_dict, output_file):
     if not packets:
         print("La lista de paquetes está vacía")
         return 0 
-    
-    # 2. Crear grafo y nodos basados en tráfico real
-    G = nx.DiGraph()
-    active_pods = set()
 
-    packets_new = []
+    # 2. Procesar paquetes
     packets_new = generate_timemaps_packets(packets)
-
-    if packets_new == []:
+    if not packets_new:
         return 0
 
-    # Procesar todos los paquetes para identificar nodos activos
+    # 3. Crear grafo con todos los nodos y aristas detectados
+    G = nx.DiGraph()
+    active_pods = set()
+    
     for timestamp, packet in packets_new:
         if IP in packet:
-            src_ip = packet[IP].src
-            dst_ip = packet[IP].dst
-            
-            if src_ip in pods_dict and dst_ip in pods_dict:
-                src_name = pods_dict[src_ip]
-                dst_name = pods_dict[dst_ip]
+            src = pods_dict.get(packet[IP].src, packet[IP].src)
+            dst = pods_dict.get(packet[IP].dst, packet[IP].dst)
+            G.add_edge(src, dst)
+            active_pods.update([src, dst])
 
-                G.add_edge(src_name, dst_name)
-                active_pods.update([src_name, dst_name])
-
-    # Añadir nodos al grafo
-    for pod in active_pods:
-        G.add_node(pod, color='lightblue', size=1000)
-    
-    # 3. Configuración de la figura
+    # 4. Configuración de la figura
     fig, ax = plt.subplots(figsize=(14, 10))
-    pos = nx.spring_layout(G, seed=42)  # Posiciones fijas para consistencia
-    
-    # 4. Función de animación mejorada
+    pos = nx.spring_layout(G, seed=42)
+    plt.tight_layout()
+
+    # 5. Función de animación mejorada
     def update(frame):
         ax.clear()
+        timestamp, packet = packets_new[frame]
+        edge_colors = ['lightgray'] * len(G.edges())
+        edge_widths = [1] * len(G.edges())
+        node_colors = ['lightblue'] * len(G.nodes())
         
-        # Calcular tiempo actual (0-100% de la duración total)
-        total_duration = packets_new[-1][0] - packets_new[0][0]
-        current_time = packets_new[0][0] + total_duration * (frame / 100)
-        
-        # Buscar el paquete más cercano a este tiempo
-        active_packet = None
-        min_diff = float('inf')
-        
-        for timestamp, packet in packets_new:
-            time_diff = abs((timestamp - current_time).total_seconds())
-            if time_diff < min_diff and IP in packet:
-                min_diff = time_diff
-                active_packet = packet
-        
-        # Preparar atributos visuales
-        edge_colors = []
-        edge_widths = []
-        node_colors = []
-        
-        # Inicializar todos como inactivos
-        for _ in G.edges():
-            edge_colors.append('lightgray')
-            edge_widths.append(1)
-        
-        for _ in G.nodes():
-            node_colors.append('lightblue')
-        
-        # Resaltar el paquete activo
-        if active_packet and active_packet[IP].src in pods_dict and active_packet[IP].dst in pods_dict:
-            src_name = pods_dict[active_packet[IP].src]
-            dst_name = pods_dict[active_packet[IP].dst]
+        # Resaltar elementos activos
+        if IP in packet:
+            src = pods_dict.get(packet[IP].src, packet[IP].src)
+            dst = pods_dict.get(packet[IP].dst, packet[IP].dst)
             
-            # Buscar índice de la arista activa
+            # Buscar índice de la arista
             edges = list(G.edges())
-            if (src_name, dst_name) in edges:
-                idx = edges.index((src_name, dst_name))
-                edge_colors[idx] = 'red' if active_packet.haslayer(Raw) else 'blue'
+            if (src, dst) in edges:
+                idx = edges.index((src, dst))
+                edge_colors[idx] = 'red' if packet.haslayer(Raw) else 'blue'
                 edge_widths[idx] = 4
                 
-                # Resaltar nodos involucrados
-                node_indices = list(G.nodes())
-                src_idx = node_indices.index(src_name)
-                dst_idx = node_indices.index(dst_name)
+                # Resaltar nodos
+                nodes = list(G.nodes())
+                src_idx = nodes.index(src)
+                dst_idx = nodes.index(dst)
                 node_colors[src_idx] = 'orange'
                 node_colors[dst_idx] = 'green'
+
+        # 6. Dibujar el grafo
+        nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1500, ax=ax)
+        nx.draw_networkx_edges(G, pos, edge_color=edge_colors, width=edge_widths, arrows=True, ax=ax)
+        nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold', ax=ax)
         
-        # Dibujar el grafo
-        nx.draw_networkx_nodes(
-            G, pos, 
-            node_color=node_colors,
-            node_size=[G.nodes[n]['size'] for n in G.nodes()],
-            ax=ax
-        )
+        # 7. Construir resumen del paquete
+        summary = [
+            f"Paquete {frame+1}/{len(packets_new)}",
+            f"Hora: {packets_new[frame][0]}",
+            f"Origen: {packet[IP].src} ({pods_dict.get(packet[IP].src, 'Desconocido')})",
+            f"Destino: {packet[IP].dst} ({pods_dict.get(packet[IP].dst, 'Desconocido')})",
+            f"Protocolo: {packet[IP].proto}",
+            f"Tamaño: {len(packet)} bytes"
+        ]
         
-        nx.draw_networkx_edges(
-            G, pos,
-            edgelist=list(G.edges()),  # Asegurar que dibuja todas las aristas
-            edge_color=edge_colors,
-            width=edge_widths,
-            arrows=True,
-            arrowstyle='->',
-            arrowsize=20,
-            ax=ax
-        )
+        if TCP in packet:
+            summary.append(f"TCP - Puerto origen: {packet[TCP].sport} Destino: {packet[TCP].dport}")
+        elif UDP in packet:
+            summary.append(f"UDP - Puerto origen: {packet[UDP].sport} Destino: {packet[UDP].dport}")
         
-        nx.draw_networkx_labels(
-            G, pos,
-            font_size=10,
-            font_weight='bold',
-            ax=ax
-        )
-        
-        # Añadir información temporal
-        ax.set_title(
-            f"Tráfico en tiempo: {current_time.strftime('%H:%M:%S.%f')[:-3]}\n"
-            f"Paquete: {'Con payload' if active_packet and active_packet.haslayer(Raw) else 'De control' if active_packet else 'N/A'}",
-            fontsize=12
-        )
-    
-    # 5. Configuración de la animación
+        # 8. Añadir texto con el resumen
+        # Texto con parámetros mejorados
+        ax.text(0.60, 0.95, "\n".join(summary), transform=ax.transAxes,
+                ha='left', va='top', fontsize=10, color='#333333',
+                bbox=dict(facecolor='#ffffff', alpha=0.8, edgecolor='gray', boxstyle='round'))
+
+    # 9. Configurar animación (1 frame = 1 paquete = 1 segundo)
     try:
         ani = FuncAnimation(
-            fig, update, 
-            frames=100, 
-            interval=100,
+            fig, update,
+            frames=len(packets_new),
+            interval=1000,  # 1000 ms = 1 segundo por frame
             blit=False
         )
-        
-        # Configurar FFmpeg
-        plt.rcParams['animation.ffmpeg_path'] = '/usr/bin/ffmpeg'
-        
-        # Guardar el video
+
+        # 10. Guardar video (1 FPS = 1 segundo por paquete)
         ani.save(
             output_file,
             writer='ffmpeg',
-            fps=10,
+            fps=1,  # 1 frame por segundo
             dpi=150,
-            extra_args=['-vcodec', 'libx264']
+            metadata={'title': 'Análisis de tráfico'},
+            extra_args=['-vcodec', 'libx264', '-preset', 'slow']
         )
-        print(f"✅ Video guardado exitosamente en {output_file}")
-        
+        print(f"✅ Video guardado en {output_file}")
+
     except Exception as e:
-        print(f"❌ Error al generar el video: {e}")
-        # Fallback: guardar imagen estática
-        update(50)  # Frame del medio
+        print(f"❌ Error: {e}")
+        update(0)
         plt.savefig(output_file.replace('.mp4', '.png'))
-        print(f"🖼️ Se guardó imagen estática en {output_file.replace('.mp4', '.png')}")
-    
+        print(f"🖼️ Imagen guardada en {output_file.replace('.mp4', '.png')}")
+
     plt.close()
+    return 1
+
 
 # Función para crear un grafo a partir de los paquetes
 def create_graph(packets, pod_name, pods_dict, services_dict_name_port={}, createVideos=False):
@@ -385,7 +345,14 @@ def for_in_packets(name_operation, pods_dict, packets, output_folder="archives/i
             if not os.path.exists(f"{output_folder}/00-traffic/segundo-{counter}"):
                 os.makedirs(f"{output_folder}/00-traffic/segundo-{counter}")
 
+            if not os.path.exists(f"{output_folder}/00-videos_per_second"):
+                os.makedirs(f"{output_folder}/00-videos_per_second")
+            
+            if not os.path.exists(f"{output_folder}/00-videos_per_second/segundo-{counter}"):
+                os.makedirs(f"{output_folder}/00-videos_per_second/segundo-{counter}")
+
             generate_txt_packets(packs, f"segundo-{counter}-{name_operation}", f"{output_folder}/00-traffic/segundo-{counter}", pods_dict)
+            generate_video_traffic(packs, pods_dict, f"{output_folder}/00-videos_per_second/segundo-{counter}-{name_operation}")
 
             # Limpiar la lista de paquetes
             packs = []
