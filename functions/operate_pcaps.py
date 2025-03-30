@@ -1,12 +1,9 @@
 from scapy.all import IP, TCP, Raw
 from scapy.sessions import TCPSession
 from classes.capture_pcap import CapturePcap
-from functions.other_functions import delete_directory_content
 import os
 from variables.init_vars import limit
 import logging
-from threading import Lock
-import datetime
 from functions.write_pcaps import *
 from variables.init_vars import pods_dict
 
@@ -220,7 +217,7 @@ def consolidate_packets(packets, count):
 
     return consolidated_packets
 
-def get_all_packets(packets, count):
+def get_all_packets_v2(packets, count):
     """
     Consolida paquetes consecutivos que son iguales, manteniendo el tiempo del último paquete.
 
@@ -252,7 +249,7 @@ def consolidate_packets_with_payload(packets, count):
     # Primero filtramos solo los paquetes con payload
     payload_packets = []
     for packet in packets:
-        if packet.haslayer(TCP) and packet.haslayer(Raw):
+        if packet[1].haslayer(TCP) and packet[1].haslayer(Raw):
             payload_packets.append(packet[1])
     
     if not payload_packets:
@@ -261,3 +258,29 @@ def consolidate_packets_with_payload(packets, count):
     generate_txt_packets(payload_packets, f"all-{count}-payloads", "archives/tcpdumps/all_traffic_order_by_time", pods_dict)
 
     return payload_packets
+
+from datetime import datetime
+def generate_timemaps_packets(packets):
+    all_packets = []
+    for packet in packets.capture:
+            try:
+                # Verificar que sea paquete TCP/IP válido
+                if not (packet.haslayer(IP) and packet.haslayer(TCP)):
+                    continue
+                
+                # Manejo robusto del timestamp
+                if hasattr(packet, 'time'):
+                    try:
+                        timestamp = datetime.fromtimestamp(float(packet.time))
+                        all_packets.append((timestamp, packet))
+                    except (ValueError, TypeError) as e:
+                        print(f"Error con timestamp en paquete: {e}")
+                        timestamp = datetime.now()  # Usar hora actual como fallback                
+            except Exception as e:
+                print(f"Error procesando paquete: {e}")
+                continue
+
+    # Ordenar paquetes por timestamp
+    all_packets.sort(key=lambda x: x[0])
+    packets.reset_lecture()
+    return all_packets

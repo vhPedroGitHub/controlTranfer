@@ -1,11 +1,6 @@
 # obteniendo una lista de pods con los datos que nos interesan
-from concurrent.futures import ProcessPoolExecutor
 from functions.other_functions import delete_directory_content
-from functions.analize_multi_pcaps import search_packet_share
 from functions.analize_multi_pcaps import analyze_multiple_pcaps
-from functions.analize_multi_pcaps import consolidate_packets_by_time
-from functions.operate_pcaps import generate_txt_packets
-from functions.analize_grpc_packets import process_pcap_grpc, process_pcap_grpc_scapy
 from functions.paralelize import *
 from variables.init_vars import *
 
@@ -29,10 +24,10 @@ if turbo:
     process_all_pcaps(pcaps_conf, pods_dict, services_dict_name_port)
 
 else:
-    create_all_graph(pods_dict, pcaps_conf, services_dict_name_port)
+    create_all_graph(pods_dict, pcaps_conf, services_dict_name_port, createVideos)
 
 # Analizar todos los pcaps
-analyze_multiple_pcaps(pcaps_conf, seePerSecond)
+analyze_multiple_pcaps(pcaps_conf, seePerSecond, pods_dict)
 
 
 

@@ -1,5 +1,8 @@
 # comandos para generar pods de pruebas.
 
+installing_dependencies:
+	@ sudo apt-get install ffmpeg
+
 build_test_pods:
 	@echo "Creando pods de prueba..."
 	@kubectl apply -f multi-pod.yml

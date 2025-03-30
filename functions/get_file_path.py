@@ -1,4 +1,3 @@
-from scapy.all import rdpcap, IP, TCP
 import os
 
 def get_file_paths(directory):

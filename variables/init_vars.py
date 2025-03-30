@@ -17,6 +17,7 @@ parser.add_argument('--limit', type=int, help='limite a la hora de crear rdcap')
 parser.add_argument('--usp', type=bool, help='booleano para especificar si queremos utilizar los puertos de los servicios o no')
 parser.add_argument('--lj', type=bool, help='booleano para especificar si queremos utilizar un json para cargar configuraciones')
 parser.add_argument('--seePerSecond', type=bool, help='booleano para especificar si queremos ver imagenes del trafico por segundo')
+parser.add_argument('--createVideos', type=bool, help='booleano para especificar si queremos ver un video del trafico por paquetes')
 
 
 # Parsear los argumentos
@@ -62,15 +63,18 @@ if lj:
         datos = json.load(archivo)
     pods_dict = datos["pods_name_ip"]
 
-
 # variables con valores por defecto
 turbo = False
 ping = False
 curl = False
 seePerSecond = False
+createVideos = False
 limit = 0
 
 # asignar a las variables con valores por defecto los valores pasados por la linea de comando
+if args.createVideos:
+    createVideos = args.createVideos
+
 if args.ping:
     ping = args.ping
 

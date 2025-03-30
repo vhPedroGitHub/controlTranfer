@@ -2,8 +2,7 @@ import pyshark
 from proto.server_pb2 import SctplbMessage, AmfMessage
 
 from scapy.all import *
-from scapy.all import IP, TCP
-from scapy.layers.sctp import SCTP, SCTPChunkData
+from scapy.all import TCP
 
 def process_pcap_grpc(pcap_file):
     # Captura los paquetes SCTP del pcap
