@@ -1,4 +1,4 @@
-from scapy.all import IP, TCP, Raw
+from scapy.all import IP, TCP, Raw, UDP
 from scapy.sessions import TCPSession
 from classes.capture_pcap import CapturePcap
 import os
@@ -204,11 +204,15 @@ def consolidate_packets(packets, count):
     for next_packet in packets[1:]:
         if (current_packet[1][IP].src == next_packet[1][IP].src and
             current_packet[1][IP].dst == next_packet[1][IP].dst and
-            current_packet[1][TCP].sport == next_packet[1][TCP].sport and
-            current_packet[1][TCP].dport == next_packet[1][TCP].dport and
-            current_packet[1][TCP].seq == next_packet[1][TCP].seq):
+            ((current_packet[1].haslayer(TCP) and next_packet[1].haslayer(TCP) and
+              current_packet[1][TCP].sport == next_packet[1][TCP].sport and
+              current_packet[1][TCP].dport == next_packet[1][TCP].dport and
+              current_packet[1][TCP].seq == next_packet[1][TCP].seq) or
+             (current_packet[1].haslayer(UDP) and next_packet[1].haslayer(UDP) and
+              current_packet[1][UDP].sport == next_packet[1][UDP].sport and
+              current_packet[1][UDP].dport == next_packet[1][UDP].dport))):
             # Update the timestamp to the latest packet's timestamp
-            current_packet = (next_packet[0] ,current_packet[1])
+            current_packet = (next_packet[0], current_packet[1])
         else:
             consolidated_packets.append(current_packet[1])
             current_packet = next_packet
@@ -251,7 +255,7 @@ def consolidate_packets_with_payload(packets, count):
     # Primero filtramos solo los paquetes con payload
     payload_packets = []
     for packet in packets:
-        if packet[1].haslayer(TCP) and packet[1].haslayer(Raw):
+        if packet[1].haslayer(Raw):
             payload_packets.append(packet[1])
     
     if not payload_packets:
@@ -265,11 +269,7 @@ from datetime import datetime
 def generate_timemaps_packets(packets):
     all_packets = []
     for packet in packets:
-            try:
-                # Verificar que sea paquete TCP/IP válido
-                if not (packet.haslayer(IP) and packet.haslayer(TCP)):
-                    continue
-                
+            try:                
                 # Manejo robusto del timestamp
                 if hasattr(packet, 'time'):
                     try:
@@ -284,5 +284,4 @@ def generate_timemaps_packets(packets):
 
     # Ordenar paquetes por timestamp
     all_packets.sort(key=lambda x: x[0])
-    packets.reset_lecture()
     return all_packets

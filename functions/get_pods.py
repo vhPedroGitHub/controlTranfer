@@ -25,10 +25,9 @@ def get_pods(v1, namespace=""):
     # Crear una lista de objetos Pods
     pod_objects = []
     for pod in pod_info:
-        if pod[2] != "kube-system":
-            pod_objects.append(Pods(pod[0], pod[1], pod[2], pod[3]))
-            print(pod[1], pod[0], pod[3])
-            pods_dict[pod[1]] = pod[0]
+        pod_objects.append(Pods(pod[0], pod[1], pod[2], pod[3]))
+        print(pod[1], pod[0], pod[3])
+        pods_dict[pod[1]] = pod[0]
 
     print(pod_objects)
     print("\n")

@@ -29,10 +29,6 @@ def analyze_multiple_pcaps(pcaps_conf, seePerSecond, pods_dict, createVideos=Fal
         
         for packet in packets:
             try:
-                # Verificar que sea paquete TCP/IP válido
-                if not (packet.haslayer(IP) and packet.haslayer(TCP)):
-                    continue
-                
                 # Manejo robusto del timestamp
                 if hasattr(packet, 'time'):
                     try:

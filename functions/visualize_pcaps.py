@@ -202,8 +202,8 @@ def generate_video_traffic(packets, pods_dict, output_file):
 
         # 6. Dibujar el grafo
         nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1500, ax=ax)
-        nx.draw_networkx_edges(G, pos, edge_color=edge_colors, width=edge_widths, arrows=True, ax=ax)
-        nx.draw_networkx_labels(G, pos, font_size=10, font_weight='bold', ax=ax)
+        nx.draw_networkx_edges(G, pos, edge_color=edge_colors, width=edge_widths, arrows=True, ax=ax, arrowsize=30, arrowstyle='->')
+        nx.draw_networkx_labels(G, pos, font_size=10, ax=ax)
         
         # 7. Construir resumen del paquete
         summary = [
@@ -277,8 +277,9 @@ def create_graph(packets, pod_name, pods_dict, services_dict_name_port={}, creat
     
     generate_txt_packets(packets, pod_name, "archives/tcpdumps/pods_traffic", pods_dict)
     anal_pcap(packets, pod_name, "archives/tcpdumps/statistics_pods_traffic", "archives/tcpdumps/content_tcp", pods_dict)
-    if createVideos:
-        generate_video_traffic(packets, pods_dict, f"archives/imgs/pods_traffic/video/{pod_name}.mp4")
+    # if createVideos:
+    #     generate_video_traffic(packets.capture, pods_dict, f"archives/imgs/pods_traffic/video/{pod_name}.mp4")
+    packets.reset_lecture()
 
 def create_graph_using_all_pcaps(pods_dict, pcaps_conf, services_dict_name_port={}):
     print(f"Creando grafo para todos los pods")
@@ -357,7 +358,7 @@ def for_in_packets(name_operation, pods_dict, packets, output_folder="archives/i
 
             generate_txt_packets(packs, f"segundo-{counter}-{name_operation}", f"{output_folder}/00-traffic/segundo-{counter}", pods_dict)
             if createVideos:
-                generate_video_traffic(packs, pods_dict, f"{output_folder}/00-videos_per_second/segundo-{counter}-{name_operation}")
+                generate_video_traffic(packs, pods_dict, f"{output_folder}/00-videos_per_second/segundo-{counter}/segundo-{counter}-{name_operation}.mp4")
 
             # Limpiar la lista de paquetes
             packs = []
