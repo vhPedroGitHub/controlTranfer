@@ -27,7 +27,7 @@ else:
     create_all_graph(pods_dict, pcaps_conf, services_dict_name_port, createVideos)
 
 # Analizar todos los pcaps
-analyze_multiple_pcaps(pcaps_conf, seePerSecond, pods_dict)
+analyze_multiple_pcaps(pcaps_conf, seePerSecond, pods_dict, createVideos)
 
 
 

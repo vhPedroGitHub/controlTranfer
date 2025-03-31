@@ -18,7 +18,7 @@ arrowstyle = '->'
 arrows = True
 arrowsize = 15
 
-def create_graph_dynamic_html(pod_name, G):
+def create_graph_dynamic_html(pod_name, G, outputfolder="archives/imgs/dinamic_html"):
     print(f"Creando grafo dinámico para el pod: {pod_name}")
     # Crear un grafo de PyVis
     net = Network(notebook=True, directed=True, cdn_resources='remote')
@@ -32,7 +32,7 @@ def create_graph_dynamic_html(pod_name, G):
         net.add_edge(src, dst)
 
     # Guardar el grafo como un archivo HTML
-    html_filename = f'archives/imgs/dinamic_html/{pod_name}.html'
+    html_filename = f'{outputfolder}/{pod_name}.html'
 
     # Guardar y mostrar el grafo en un navegador
     net.show(html_filename)
@@ -297,14 +297,16 @@ def create_graph_using_all_pcaps(pods_dict, pcaps_conf, services_dict_name_port=
 
     create_graph_dynamic_html("all", G)
 
-def create_all_graph(pods_dict, pcaps_conf, services_dict_name_port={}, createVideos=False):
+def create_all_graph(pods_dict, pcaps_conf, services_dict_name_port={}, createVideos=False, graphAll=False):
     print(f"Creando grafo para todos los pods")
     all_packets = get_all_packets(pcaps_conf)
     for packets, pod_name in all_packets:
         create_graph(packets, pod_name, pods_dict, services_dict_name_port, createVideos)
-    create_graph_using_all_pcaps(pods_dict, pcaps_conf, services_dict_name_port)
+    
+    if graphAll:
+        create_graph_using_all_pcaps(pods_dict, pcaps_conf, services_dict_name_port)
 
-def for_in_packets(name_operation, pods_dict, packets, output_folder="archives/imgs/pods_traffic/image_persecond", seconds=1):
+def for_in_packets(name_operation, pods_dict, packets, output_folder="archives/imgs/pods_traffic/image_persecond", seconds=1, createVideos=False):
     packs = []
 
     G = nx.DiGraph()
@@ -335,9 +337,11 @@ def for_in_packets(name_operation, pods_dict, packets, output_folder="archives/i
 
             if not os.path.exists(f"{output_folder}/segundo-{counter}"):
                 os.makedirs(f"{output_folder}/segundo-{counter}")
+                os.makedirs(f"archives/imgs/pods_traffic/image_persecond/segundo-{counter}/html")
 
             # Guardar la imagen con un nombre único
             image_path = os.path.join(f"{output_folder}/segundo-{counter}", f"segundo-{counter}-{name_operation}.png")
+            create_graph_dynamic_html(f"segundo-{counter}-{name_operation}", G, f"archives/imgs/pods_traffic/image_persecond/segundo-{counter}/html")
             plt.savefig(image_path)
             plt.close()
             print(f"Imagen guardada: {image_path}")
@@ -352,7 +356,8 @@ def for_in_packets(name_operation, pods_dict, packets, output_folder="archives/i
                 os.makedirs(f"{output_folder}/00-videos_per_second/segundo-{counter}")
 
             generate_txt_packets(packs, f"segundo-{counter}-{name_operation}", f"{output_folder}/00-traffic/segundo-{counter}", pods_dict)
-            generate_video_traffic(packs, pods_dict, f"{output_folder}/00-videos_per_second/segundo-{counter}-{name_operation}")
+            if createVideos:
+                generate_video_traffic(packs, pods_dict, f"{output_folder}/00-videos_per_second/segundo-{counter}-{name_operation}")
 
             # Limpiar la lista de paquetes
             packs = []
@@ -360,7 +365,7 @@ def for_in_packets(name_operation, pods_dict, packets, output_folder="archives/i
 
         packs.append(packet)
 
-def create_graph_per_second(pods_dict, dict_packets_to_analize={}, output_folder="archives/imgs/pods_traffic/image_persecond", seconds=1):
+def create_graph_per_second(pods_dict, dict_packets_to_analize={}, output_folder="archives/imgs/pods_traffic/image_persecond", seconds=1, createVideos=False):
     print(f"Generando imágenes de tráfico por segundo")
     
     # Asegurar que la carpeta de salida existe
@@ -369,6 +374,6 @@ def create_graph_per_second(pods_dict, dict_packets_to_analize={}, output_folder
         os.makedirs(f"{output_folder}/00-traffic")
 
     for key, value in dict_packets_to_analize.items():
-        for_in_packets(f"{key}", pods_dict, value, output_folder, seconds)
+        for_in_packets(f"{key}", pods_dict, value, output_folder, seconds, createVideos)
 
     print("Proceso completado.")

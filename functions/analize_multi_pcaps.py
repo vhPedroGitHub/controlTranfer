@@ -6,7 +6,7 @@ from functions.operate_pcaps import consolidate_packets, consolidate_packets_wit
 from scapy.all import IP, TCP, Raw
 
 from datetime import datetime
-def analyze_multiple_pcaps(pcaps_conf, seePerSecond, pods_dict):
+def analyze_multiple_pcaps(pcaps_conf, seePerSecond, pods_dict, createVideos=False):
     """
     Analiza múltiples archivos PCAP y organiza el tráfico según la fecha y hora en que ocurrió.
 
@@ -56,7 +56,7 @@ def analyze_multiple_pcaps(pcaps_conf, seePerSecond, pods_dict):
     dict_packets_to_analize["only_payloads"] = consolidate_packets_with_payload(all_packets, 2)
 
     if seePerSecond:
-        create_graph_per_second(pods_dict, dict_packets_to_analize)
+        create_graph_per_second(pods_dict, dict_packets_to_analize, createVideos=createVideos)
 
 def search_packet_share(pcap_origin, pcap_dest):
     """

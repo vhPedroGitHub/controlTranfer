@@ -46,6 +46,8 @@ def get_all_packets(pcaps_conf):
     return all_packets
 
 def build_tcp_flow(packets, pod_name, filename):
+    if packets.is_pcapreader:
+        return 1
     # Agrupar paquetes por sesión TCP
     sessions = packets.capture.sessions(session_extractor=TCPSession)
     # input("Press Enter to continue...")
@@ -262,7 +264,7 @@ def consolidate_packets_with_payload(packets, count):
 from datetime import datetime
 def generate_timemaps_packets(packets):
     all_packets = []
-    for packet in packets.capture:
+    for packet in packets:
             try:
                 # Verificar que sea paquete TCP/IP válido
                 if not (packet.haslayer(IP) and packet.haslayer(TCP)):
