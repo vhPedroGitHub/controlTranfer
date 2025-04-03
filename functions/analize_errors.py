@@ -7,7 +7,7 @@ def get_packet_errors(packet):
     try:
         # Reconstruimos el paquete con checksums recalculados
         rebuilt_packet = packet.__class__(bytes(packet))
-        rebuilt_bytes = packet.build(auto_cksum=True)
+        rebuilt_bytes = packet.build()
         rebuilt_packet = packet.__class__(rebuilt_bytes)
     except Exception as e:
         return f"Error al procesar el paquete: {str(e)}"

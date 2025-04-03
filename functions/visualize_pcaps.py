@@ -275,7 +275,8 @@ def create_graph(packets, pod_name, pods_dict, services_dict_name_port={}, creat
     if not os.path.exists("archives/imgs/pods_traffic/video"):
         os.makedirs("archives/imgs/pods_traffic/video")
     
-    generate_txt_packets(packets, pod_name, "archives/tcpdumps/pods_traffic", pods_dict)
+    generate_txt_packets(packets.capture, pod_name, "archives/tcpdumps/pods_traffic", pods_dict)
+    packets.reset_lecture()
     anal_pcap(packets, pod_name, "archives/tcpdumps/statistics_pods_traffic", "archives/tcpdumps/content_tcp", pods_dict)
     # if createVideos:
     #     generate_video_traffic(packets.capture, pods_dict, f"archives/imgs/pods_traffic/video/{pod_name}.mp4")

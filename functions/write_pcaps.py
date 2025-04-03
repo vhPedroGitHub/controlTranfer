@@ -33,7 +33,7 @@ def generate_txt_packets(packets, pod_name, filename, pods_dict={}):
                         if packet:  # Verificar que el paquete no esté vacío
                             timestamp = packet.time
                             time = datetime.datetime.fromtimestamp(float(timestamp))
-                            f.write(f"source: {src_name}  ---->  dest: {dst_name} \n{time}\n - {str(packet.summary())}\n erros: {errors} \n payloads: {payload} \n\n")
+                            f.write(f"🚃source: {src_name}  ---->  dest: {dst_name} \n{time}\n - 🕵️{str(packet.summary())}\n ⚠️erros: {errors} \n payloads: {payload} \n\n")
                     else:
                         timestamp = packet.time
                         time = datetime.datetime.fromtimestamp(float(timestamp))
